@@ -3,9 +3,7 @@ import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
-import { FiBookmark } from 'react-icons/fi';
 import { HiOutlineCalculator } from "react-icons/hi";
-import cartIcon from '../assets/images/cart.png';
 import BasketHeader from '../components/basket/BasketHeader';
 import IngredientSection from '../components/basket/IngredientSection';
 import DishSection from '../components/basket/DishSection';
@@ -22,17 +20,34 @@ const BasketPage = () => {
         foodSection: true
     });
 
-    // Fetch basket items from localStorage on component mount
     useEffect(() => {
         const storedBasket = localStorage.getItem('basketItems');
         if (storedBasket) {
             const parsedBasket = JSON.parse(storedBasket);
+
+            if (parsedBasket.ingredients) {
+                parsedBasket.ingredients = parsedBasket.ingredients.map(item => ({
+                    ...item,
+                    quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
+                }));
+            }
+
+            if (parsedBasket.dishes) {
+                Object.keys(parsedBasket.dishes).forEach(dishId => {
+                    if (parsedBasket.dishes[dishId].ingredients) {
+                        parsedBasket.dishes[dishId].ingredients = parsedBasket.dishes[dishId].ingredients.map(item => ({
+                            ...item,
+                            quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
+                        }));
+                    }
+                });
+            }
+
             setBasketItems(parsedBasket);
 
-            // Initialize expanded state for all dishes
             const initialExpandedState = {};
             Object.keys(parsedBasket.dishes || {}).forEach(dishId => {
-                initialExpandedState[dishId] = true; // Default expanded
+                initialExpandedState[dishId] = true;
             });
 
             setExpandedSections(prev => ({
@@ -43,14 +58,12 @@ const BasketPage = () => {
         setLoading(false);
     }, []);
 
-    // Save basket items to localStorage whenever they change
     useEffect(() => {
         if (!loading) {
             localStorage.setItem('basketItems', JSON.stringify(basketItems));
         }
     }, [basketItems, loading]);
 
-    // Toggle section expanded state
     const toggleSection = (section, id = null) => {
         if (section === 'ingredients') {
             setExpandedSections(prev => ({
@@ -73,8 +86,9 @@ const BasketPage = () => {
         }
     };
 
-    // Update quantity of an ingredient
     const updateQuantity = (id, newQuantity, isDishIngredient = false, dishId = null) => {
+        newQuantity = parseFloat(parseFloat(newQuantity).toFixed(1));
+
         if (isDishIngredient && dishId) {
             setBasketItems(prevState => {
                 const updatedDishes = { ...prevState.dishes };
@@ -114,23 +128,18 @@ const BasketPage = () => {
         }
     };
 
-    // Remove an item
     const removeItem = (id, isDishIngredient = false, dishId = null) => {
         if (isDishIngredient && dishId) {
-            // Remove ingredient from a dish
             setBasketItems(prevState => {
                 const updatedDishes = { ...prevState.dishes };
                 if (updatedDishes[dishId]) {
-                    // Filter out the removed ingredient
                     const updatedIngredients = updatedDishes[dishId].ingredients.filter(
                         item => item.id !== id
                     );
 
-                    // If no ingredients left, remove the entire dish
                     if (updatedIngredients.length === 0) {
                         delete updatedDishes[dishId];
 
-                        // Also update expanded sections state
                         setExpandedSections(prev => {
                             const updatedExpanded = { ...prev.dishes };
                             delete updatedExpanded[dishId];
@@ -140,7 +149,6 @@ const BasketPage = () => {
                             };
                         });
                     } else {
-                        // Update the dish with remaining ingredients
                         updatedDishes[dishId] = {
                             ...updatedDishes[dishId],
                             ingredients: updatedIngredients
@@ -154,7 +162,6 @@ const BasketPage = () => {
                 };
             });
         } else if (dishId) {
-            // Remove entire dish
             setBasketItems(prevState => {
                 const updatedDishes = { ...prevState.dishes };
                 delete updatedDishes[dishId];
@@ -174,7 +181,6 @@ const BasketPage = () => {
                 };
             });
         } else {
-            // Remove regular ingredient
             setBasketItems(prevState => ({
                 ...prevState,
                 ingredients: prevState.ingredients.filter(item => item.id !== id)
@@ -182,12 +188,9 @@ const BasketPage = () => {
         }
     };
 
-    // Calculate total number of items in the basket
     const getTotalItemCount = () => {
-        // Count individual ingredients
         const ingredientCount = basketItems.ingredients.length;
 
-        // Count total ingredients in dishes
         let dishIngredientsCount = 0;
         Object.values(basketItems.dishes).forEach(dish => {
             dishIngredientsCount += dish.ingredients.length;
@@ -204,11 +207,9 @@ const BasketPage = () => {
         alert("Bắt đầu tính toán thanh toán!");
     };
 
-    // Update servings for a dish
     const updateDishServings = (dishId, newServings) => {
-        // If servings is reduced to 0, remove the dish entirely
         if (newServings <= 0) {
-            removeItem(null, false, dishId); // Remove the entire dish
+            removeItem(null, false, dishId);
         } else {
             setBasketItems(prev => ({
                 ...prev,
@@ -225,7 +226,7 @@ const BasketPage = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Header basketCount={getTotalItemCount()} />
+            <Header />
             <Navbar />
 
             <div className="container mx-auto px-4 py-8">

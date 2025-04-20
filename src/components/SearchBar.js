@@ -17,13 +17,13 @@ const SearchBar = ({ onSearch }) => {
         }
     };
     return (
-        <div className="flex justify-center items-center px-12 py-6 space-x-4">
+        <div className="flex justify-center items-center px-12 space-x-4">
             <form onSubmit={handleSubmit} className="flex w-2/3">
                 <div className="flex items-center w-full px-5 py-3 border border-gray-200 rounded-full bg-white">
                     <FiSearch className="h-5 w-5 text-gray-400 mr-3" />
                     <input
                         type="text"
-                        placeholder="Tìm kiếm nguyên liệu cần thiết"
+                        placeholder="Tìm kiếm"
                         className="w-full outline-none text-gray-700"
                         value={searchTerm}
                         onChange={handleInputChange}

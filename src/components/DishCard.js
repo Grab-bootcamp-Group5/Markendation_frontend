@@ -21,7 +21,7 @@ const DishCard = ({ id, image, name, ingredientCount, ingredients }) => {
             name: ingredient.name,
             englishName: ingredient.englishName,
             image: ingredient.image,
-            quantity: ingredient.quantity || 1,
+            quantity: ingredient.quantity,
             unit: ingredient.category === "Dầu ăn" ? "Lít" : "KG",
             category: ingredient.category
         }));

@@ -9,7 +9,6 @@ const FeaturedSection = ({ ingredients }) => {
             <div className="mb-10 bg-gradient-to-r from-orange-100 to-orange-50 rounded-xl p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-gray-800">Nguyên Liệu Nổi Bật</h2>
-                    <button className="text-orange-500 font-medium">Xem tất cả</button>
                 </div>
                 <p className="text-gray-600 mb-4">
                     Đang tải dữ liệu nguyên liệu...
@@ -27,7 +26,6 @@ const FeaturedSection = ({ ingredients }) => {
         <div className="mb-10 bg-gradient-to-r from-orange-100 to-orange-50 rounded-xl p-6">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">Nguyên Liệu Nổi Bật</h2>
-                <button className="text-orange-500 font-medium">Xem tất cả</button>
             </div>
             <p className="text-gray-600 mb-4">
                 Các nguyên liệu thiết yếu được sử dụng nhiều nhất
