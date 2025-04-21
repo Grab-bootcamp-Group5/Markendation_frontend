@@ -56,7 +56,7 @@ const Header = ({ basketCount }) => {
                 <Link to="/basket" className="flex items-center bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
                     <img src={cartIcon} alt="Cart" className="h-7 w-7 mr-2" />
                     <span className="font-bold mr-1">{itemCount}</span>
-                    <span>items</span>
+                    <span>sản phẩm</span>
                 </Link>
 
                 <button className="border border-gray-200 p-2 rounded hover:bg-gray-50 transition-colors">

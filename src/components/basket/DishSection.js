@@ -44,7 +44,7 @@ const DishItem = ({
     dishId, dish, isExpanded, toggleDish, updateQuantity, removeItem, updateDishServings
 }) => {
     return (
-        <div className="mb-5 bg-gray-50 rounded-lg overflow-hidden shadow-sm">
+        <div className="mb-4 bg-gray-50 rounded-lg overflow-hidden shadow-sm">
             <div className="py-4 px-5 flex items-center">
                 <div className="flex items-center">
                     {dish.image && (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FiShoppingBag, FiCalendar, FiChevronRight } from 'react-icons/fi';
+import { images } from '../../assets/assets';
 
 const SavedBasketsList = ({ baskets }) => {
     const formatDate = (dateString) => {
@@ -14,7 +15,8 @@ const SavedBasketsList = ({ baskets }) => {
 
     return (
         <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="bg-green-600 py-3 px-4">
+            <div className="flex bg-green-600 py-3 px-4">
+                <img src={images.cart} alt="" className="h-7 w-7 mr-2" />
                 <h2 className="text-white text-xl font-medium">Giỏ Hàng Đã Lưu</h2>
             </div>
 

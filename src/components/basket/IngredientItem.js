@@ -2,9 +2,8 @@ import React from 'react';
 import QuantityControl from './QuantityControl';
 
 const IngredientItem = ({
-    item, isDishIngredient = false, dishId = null, updateQuantity, removeItem, dishServings = 1
+    item, isDishIngredient = false, dishId = null, updateQuantity, removeItem
 }) => {
-    // Thống nhất layout cho mọi loại nguyên liệu
     return (
         <div className="flex items-center py-4 mb-3 bg-gray-50 rounded-lg">
             <div className="flex items-center w-[40%]">
@@ -26,7 +25,6 @@ const IngredientItem = ({
                     dishId={dishId}
                     updateQuantity={updateQuantity}
                     removeItem={removeItem}
-                    dishServings={dishServings}
                 />
             </div>
         </div>

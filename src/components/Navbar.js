@@ -16,8 +16,8 @@ const Navbar = () => {
                     to="/homepage"
                     className={({ isActive }) =>
                         isActive
-                            ? "px-4 py-2 bg-orange-500 text-white rounded-full"
-                            : "px-4 py-2 text-gray-700 hover:text-gray-900"
+                            ? "px-4 py-2 bg-orange-500 text-white rounded-full text-lg font-medium"
+                            : "px-4 py-2 text-gray-700 hover:text-gray-900 text-lg font-medium"
                     }
                 >
                     Trang chủ
@@ -26,8 +26,8 @@ const Navbar = () => {
                     to="/ingredients-bank"
                     className={({ isActive }) =>
                         isActive
-                            ? "px-4 py-2 bg-orange-500 text-white rounded-full"
-                            : "px-4 py-2 text-gray-700 hover:text-gray-900"
+                            ? "px-4 py-2 bg-orange-500 text-white rounded-full text-lg font-medium"
+                            : "px-4 py-2 text-gray-700 hover:text-gray-900 text-lg font-medium"
                     }
                 >
                     Ngân hàng nguyên liệu
@@ -36,8 +36,8 @@ const Navbar = () => {
                     to="/dishes-bank"
                     className={({ isActive }) =>
                         isActive
-                            ? "px-4 py-2 bg-orange-500 text-white rounded-full"
-                            : "px-4 py-2 text-gray-700 hover:text-gray-900"
+                            ? "px-4 py-2 bg-orange-500 text-white rounded-full text-lg font-medium"
+                            : "px-4 py-2 text-gray-700 hover:text-gray-900 text-lg font-medium"
                     }
                 >
                     Ngân hàng món ăn
@@ -46,8 +46,8 @@ const Navbar = () => {
                     to="/saved-baskets"
                     className={({ isActive }) =>
                         isActive
-                            ? "px-4 py-2 bg-orange-500 text-white rounded-full"
-                            : "px-4 py-2 text-gray-700 hover:text-gray-900"
+                            ? "px-4 py-2 bg-orange-500 text-white rounded-full text-lg font-medium"
+                            : "px-4 py-2 text-gray-700 hover:text-gray-900 text-lg font-medium"
                     }
                 >
                     Giỏ hàng đã lưu
@@ -56,7 +56,7 @@ const Navbar = () => {
 
             {/* Auth Button */}
             <div>
-                <button className="bg-gray-900 text-white px-6 py-2 rounded-full">Login/Signup</button>
+                <button className="bg-gray-900 text-white px-6 py-2 rounded-full font-medium">Đăng nhập/Đăng kí</button>
             </div>
         </nav>
     );

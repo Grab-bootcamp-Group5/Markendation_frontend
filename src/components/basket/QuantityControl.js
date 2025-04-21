@@ -2,17 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { FiTrash2 } from 'react-icons/fi';
 
 const QuantityControl = ({
-    item, isDishIngredient = false, dishId = null, updateQuantity, removeItem, dishServings = 1
+    item, isDishIngredient = false, dishId = null, updateQuantity, removeItem
 }) => {
-    const actualQuantity = isDishIngredient && dishId
-        ? item.quantity * (dishServings || 1)
-        : item.quantity;
-
-    const [inputValue, setInputValue] = useState(actualQuantity.toFixed(1));
+    const [inputValue, setInputValue] = useState(item.quantity.toFixed(1));
 
     useEffect(() => {
-        setInputValue(actualQuantity.toFixed(1));
-    }, [actualQuantity]);
+        setInputValue(item.quantity.toFixed(1));
+    }, [item.quantity]);
 
     const handleInputChange = (e) => {
         setInputValue(e.target.value);
@@ -21,7 +17,7 @@ const QuantityControl = ({
     const handleBlur = () => {
         const newQuantity = parseFloat(parseFloat(inputValue).toFixed(1));
         if (isNaN(newQuantity) || newQuantity <= 0) {
-            setInputValue(actualQuantity.toFixed(1));
+            setInputValue(item.quantity.toFixed(1));
         } else {
             updateQuantity(item.id, newQuantity, isDishIngredient, dishId);
         }
