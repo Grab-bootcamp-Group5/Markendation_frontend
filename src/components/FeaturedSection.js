@@ -34,6 +34,7 @@ const FeaturedSection = ({ ingredients }) => {
                 {ingredients.slice(0, 4).map((ingredient) => (
                     <ProductCard
                         key={ingredient.id}
+                        id={ingredient.id}
                         image={ingredient.image}
                         name={ingredient.name}
                         restaurantCount={ingredient.restaurantCount}

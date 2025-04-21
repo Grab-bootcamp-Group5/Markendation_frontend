@@ -1,12 +1,9 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-// Create context
 const BasketContext = createContext();
 
-// Custom hook for using basket context
 export const useBasket = () => useContext(BasketContext);
 
-// Provider component
 export const BasketProvider = ({ children }) => {
     const [basketItems, setBasketItems] = useState({
         ingredients: [],
@@ -14,7 +11,6 @@ export const BasketProvider = ({ children }) => {
     });
     const [loading, setLoading] = useState(true);
 
-    // Initialize basket from localStorage
     useEffect(() => {
         const storedBasket = localStorage.getItem('basketItems');
         if (storedBasket) {
@@ -23,24 +19,19 @@ export const BasketProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    // Save to localStorage whenever basket changes
     useEffect(() => {
         if (!loading) {
             localStorage.setItem('basketItems', JSON.stringify(basketItems));
-            // Dispatch event for components that need to know when basket updates
             const event = new CustomEvent('basketUpdated');
             window.dispatchEvent(event);
         }
     }, [basketItems, loading]);
 
-    // Add an ingredient to the basket
     const addIngredient = (ingredient) => {
         setBasketItems(prevState => {
-            // Check if ingredient already exists
             const existingItemIndex = prevState.ingredients.findIndex(item => item.id === ingredient.id);
 
             if (existingItemIndex !== -1) {
-                // Increment quantity if already in basket
                 const updatedIngredients = [...prevState.ingredients];
                 updatedIngredients[existingItemIndex] = {
                     ...updatedIngredients[existingItemIndex],
@@ -52,7 +43,6 @@ export const BasketProvider = ({ children }) => {
                     ingredients: updatedIngredients
                 };
             } else {
-                // Add new ingredient to basket
                 return {
                     ...prevState,
                     ingredients: [...prevState.ingredients, {
@@ -65,15 +55,12 @@ export const BasketProvider = ({ children }) => {
         });
     };
 
-    // Add a dish with its ingredients to the basket
     const addDish = (dish) => {
         setBasketItems(prevState => {
-            // If dish already exists, just return current state
             if (prevState.dishes[dish.id]) {
                 return prevState;
             }
 
-            // Add new dish with its ingredients to basket
             return {
                 ...prevState,
                 dishes: {
@@ -84,19 +71,18 @@ export const BasketProvider = ({ children }) => {
         });
     };
 
-    // Update quantity of an ingredient
     const updateIngredientQuantity = (id, amount) => {
         setBasketItems(prevState => {
             const updatedIngredients = prevState.ingredients.map(item => {
                 if (item.id === id) {
                     const newQuantity = item.quantity + amount;
                     if (newQuantity <= 0) {
-                        return null; // Will be filtered out below
+                        return null;
                     }
                     return { ...item, quantity: newQuantity };
                 }
                 return item;
-            }).filter(Boolean); // Remove null items
+            }).filter(Boolean);
 
             return {
                 ...prevState,
@@ -105,7 +91,6 @@ export const BasketProvider = ({ children }) => {
         });
     };
 
-    // Remove an ingredient
     const removeIngredient = (id) => {
         setBasketItems(prevState => ({
             ...prevState,
@@ -113,7 +98,6 @@ export const BasketProvider = ({ children }) => {
         }));
     };
 
-    // Update quantity of an ingredient in a dish
     const updateDishIngredientQuantity = (dishId, ingredientId, amount) => {
         setBasketItems(prevState => {
             const updatedDishes = { ...prevState.dishes };
@@ -123,12 +107,12 @@ export const BasketProvider = ({ children }) => {
                     if (item.id === ingredientId) {
                         const newQuantity = item.quantity + amount;
                         if (newQuantity <= 0) {
-                            return null; // Will be filtered out below
+                            return null;
                         }
                         return { ...item, quantity: newQuantity };
                     }
                     return item;
-                }).filter(Boolean); // Remove null items
+                }).filter(Boolean);
 
                 updatedDishes[dishId] = {
                     ...updatedDishes[dishId],
@@ -143,7 +127,6 @@ export const BasketProvider = ({ children }) => {
         });
     };
 
-    // Remove a dish
     const removeDish = (dishId) => {
         setBasketItems(prevState => {
             const updatedDishes = { ...prevState.dishes };
@@ -156,7 +139,6 @@ export const BasketProvider = ({ children }) => {
         });
     };
 
-    // Calculate total number of items in the basket
     const getTotalItemCount = () => {
         const ingredientCount = basketItems.ingredients.reduce((total, item) => total + item.quantity, 0);
 
@@ -168,7 +150,6 @@ export const BasketProvider = ({ children }) => {
         return ingredientCount + dishIngredientCount;
     };
 
-    // Clear the entire basket
     const clearBasket = () => {
         setBasketItems({
             ingredients: [],
@@ -176,7 +157,6 @@ export const BasketProvider = ({ children }) => {
         });
     };
 
-    // Context value that will be provided
     const value = {
         basketItems,
         loading,

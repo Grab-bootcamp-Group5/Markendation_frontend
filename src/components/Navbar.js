@@ -20,7 +20,7 @@ const Navbar = () => {
                             : "px-4 py-2 text-gray-700 hover:text-gray-900"
                     }
                 >
-                    Home
+                    Trang chủ
                 </NavLink>
                 <NavLink
                     to="/ingredients-bank"
@@ -30,7 +30,7 @@ const Navbar = () => {
                             : "px-4 py-2 text-gray-700 hover:text-gray-900"
                     }
                 >
-                    Ingredients Bank
+                    Ngân hàng nguyên liệu
                 </NavLink>
                 <NavLink
                     to="/dishes-bank"
@@ -40,17 +40,17 @@ const Navbar = () => {
                             : "px-4 py-2 text-gray-700 hover:text-gray-900"
                     }
                 >
-                    Dishes Bank
+                    Ngân hàng món ăn
                 </NavLink>
                 <NavLink
-                    to="/basket"
+                    to="/saved-baskets"
                     className={({ isActive }) =>
                         isActive
                             ? "px-4 py-2 bg-orange-500 text-white rounded-full"
                             : "px-4 py-2 text-gray-700 hover:text-gray-900"
                     }
                 >
-                    Basket
+                    Giỏ hàng đã lưu
                 </NavLink>
             </div>
 

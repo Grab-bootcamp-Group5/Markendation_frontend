@@ -4,7 +4,10 @@ import IngredientBankPage from './pages/IngredientBankPage';
 import BasketPage from './pages/BasketPage';
 import DishesPage from './pages/DishesPage';
 import HomePage from './pages/HomePage';
-import { ToastContainer, toast } from 'react-toastify';
+import SavedBasketPage from './pages/SavedBasketPage';
+import SavedBasketDetailPage from './pages/SavedBasketDetailPage';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
@@ -16,6 +19,8 @@ function App() {
           <Route path="/ingredients-bank" element={<IngredientBankPage />} />
           <Route path="/dishes-bank" element={<DishesPage />} />
           <Route path="/basket" element={<BasketPage />} />
+          <Route path="/saved-baskets" element={<SavedBasketPage />} />
+          <Route path="/saved-baskets/:basketId" element={<SavedBasketDetailPage />} />
         </Routes>
         <ToastContainer />
       </div>

@@ -19,9 +19,8 @@ const DishCard = ({ id, image, name, ingredientCount, ingredients }) => {
         const formattedIngredients = ingredients.map(ingredient => ({
             id: ingredient.id,
             name: ingredient.name,
-            englishName: ingredient.englishName,
             image: ingredient.image,
-            quantity: ingredient.quantity,
+            quantity: ingredient.quantity || 1,
             unit: ingredient.category === "Dầu ăn" ? "Lít" : "KG",
             category: ingredient.category
         }));

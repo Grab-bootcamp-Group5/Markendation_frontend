@@ -1,7 +1,7 @@
 import React from 'react';
 import { toast } from 'react-toastify';
 
-const ProductCard = ({ image, name, restaurantCount, id, englishName, category }) => {
+const ProductCard = ({ image, name, restaurantCount, id, category }) => {
     const addToCart = () => {
         const storedBasket = localStorage.getItem('basketItems');
         let basketItems = storedBasket ? JSON.parse(storedBasket) : {
@@ -17,7 +17,6 @@ const ProductCard = ({ image, name, restaurantCount, id, englishName, category }
             basketItems.ingredients.push({
                 id,
                 name,
-                englishName,
                 image,
                 category,
                 quantity: 1,
@@ -29,7 +28,7 @@ const ProductCard = ({ image, name, restaurantCount, id, englishName, category }
 
         const event = new CustomEvent('basketUpdated');
         window.dispatchEvent(event);
-        toast.success(`Đã thêm ${englishName} vào giỏ hàng!`)
+        toast.success(`Đã thêm ${name} vào giỏ hàng!`)
     };
 
     return (

@@ -1,44 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiTrash2 } from 'react-icons/fi';
 
 const QuantityControl = ({
     item, isDishIngredient = false, dishId = null, updateQuantity, removeItem, dishServings = 1
 }) => {
-    // Calculate actual quantity based on whether it's a dish ingredient
-    // const actualQuantity = isDishIngredient && dishId
-    //     ? (item.quantity * (dishServings || 1)).toFixed(1)
-    //     : item.quantity.toFixed(1);
+    const actualQuantity = isDishIngredient && dishId
+        ? item.quantity * (dishServings || 1)
+        : item.quantity;
 
-    // Local state to manage the input value
-    const [inputValue, setInputValue] = useState(item.quantity.toFixed(1));
+    const [inputValue, setInputValue] = useState(actualQuantity.toFixed(1));
 
-    // Handle direct input change
+    useEffect(() => {
+        setInputValue(actualQuantity.toFixed(1));
+    }, [actualQuantity]);
+
     const handleInputChange = (e) => {
         setInputValue(e.target.value);
     };
 
-    // Handle blur event (when user clicks away from input)
     const handleBlur = () => {
-        let newValue = parseFloat(inputValue);
-
-        // Validate the new value
-        if (isNaN(newValue) || newValue <= 0) {
-            // Reset to current value if invalid
-            setInputValue(item.quantity.toFixed(1));
+        const newQuantity = parseFloat(parseFloat(inputValue).toFixed(1));
+        if (isNaN(newQuantity) || newQuantity <= 0) {
+            setInputValue(actualQuantity.toFixed(1));
         } else {
-            // Round to 1 decimal place
-            newValue = parseFloat(newValue.toFixed(1));
-            // Update the quantity in parent component
-            updateQuantity(item.id, newValue, isDishIngredient, dishId);
-            // Update local input value
-            setInputValue(newValue.toFixed(1));
+            updateQuantity(item.id, newQuantity, isDishIngredient, dishId);
         }
     };
 
-    // Handle key press (Enter key)
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
-            e.target.blur(); // Trigger the blur event
+            handleBlur();
         }
     };
 
@@ -46,14 +37,13 @@ const QuantityControl = ({
         <div className="flex items-center">
             <button
                 onClick={() => {
-                    // Decrease by 0.1 instead of 1, with a minimum of 0.1
                     const newQuantity = item.quantity > 0.1 ? parseFloat((item.quantity - 0.1).toFixed(1)) : 0.1;
                     updateQuantity(item.id, newQuantity, isDishIngredient, dishId);
-                    setInputValue(newQuantity.toFixed(1)); // Update local state
+                    setInputValue(newQuantity.toFixed(1));
                 }}
-                className="w-5 h-5 flex items-center justify-center rounded-full bg-black text-white"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-black text-white"
             >
-                <span className="text-sm">−</span>
+                <span className="text-base">−</span>
             </button>
 
             <input
@@ -62,31 +52,30 @@ const QuantityControl = ({
                 onChange={handleInputChange}
                 onBlur={handleBlur}
                 onKeyPress={handleKeyPress}
-                className="mx-1 px-4 py-1 bg-white border border-gray-300 rounded-full text-center w-16"
+                className="mx-3 px-4 py-2 bg-white border border-gray-300 rounded-full text-center w-24 text-base font-medium"
                 aria-label="Quantity"
             />
 
             <button
                 onClick={() => {
-                    // Increase by 0.1 instead of 1
                     const newQuantity = parseFloat((item.quantity + 0.1).toFixed(1));
                     updateQuantity(item.id, newQuantity, isDishIngredient, dishId);
-                    setInputValue(newQuantity.toFixed(1)); // Update local state
+                    setInputValue(newQuantity.toFixed(1));
                 }}
-                className="w-5 h-5 flex items-center justify-center rounded-full bg-black text-white"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-black text-white"
             >
-                <span className="text-sm">+</span>
+                <span className="text-base">+</span>
             </button>
 
-            <span className="ml-3 font-medium text-sm">
+            <span className="ml-6 font-medium text-base">
                 {item.unit}
             </span>
 
             <button
                 onClick={() => removeItem(item.id, isDishIngredient, dishId)}
-                className="ml-6 w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded"
+                className="ml-8 w-10 h-10 flex items-center justify-center bg-red-500 text-white rounded"
             >
-                <FiTrash2 size={18} />
+                <FiTrash2 size={20} />
             </button>
         </div>
     );

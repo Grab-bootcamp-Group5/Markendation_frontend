@@ -24,8 +24,7 @@ const IngredientBankPage = () => {
             try {
                 const data = ingredientsList.map((ingredient, index) => ({
                     id: ingredient.id,
-                    name: ingredient.vietnameseName,
-                    englishName: ingredient.name,
+                    name: ingredient.name,
                     image: ingredient.image,
                     restaurantCount: ingredient.restaurantCount,
                     category: ingredient.category
@@ -64,8 +63,7 @@ const IngredientBankPage = () => {
 
         const filtered = ingredients.filter(item => {
             const matchesSearch =
-                item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (item.englishName && item.englishName.toLowerCase().includes(searchTerm.toLowerCase()));
+                item.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = activeCategory === "Tất cả" || item.category === activeCategory;
             return matchesSearch && matchesCategory;
         });
@@ -114,7 +112,6 @@ const IngredientBankPage = () => {
                                     image={ingredient.image}
                                     name={ingredient.name}
                                     category={ingredient.category}
-                                    englishName={ingredient.englishName}
                                     restaurantCount={ingredient.restaurantCount}
                                 />
                             ))}

@@ -40,7 +40,7 @@ const DishesPage = () => {
                 setError("Có lỗi xảy ra khi tải dữ liệu món ăn. Vui lòng thử lại sau.");
                 setLoading(false);
             }
-        }, 800); // Simulate network delay
+        }, 800);
     }, []);
 
     useEffect(() => {
@@ -65,8 +65,7 @@ const DishesPage = () => {
 
         const filtered = dishes.filter(dish => {
             const matchesSearch =
-                dish.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (dish.englishName && dish.englishName.toLowerCase().includes(searchTerm.toLowerCase()));
+                dish.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = activeCategory === "Tất cả" || dish.category === activeCategory;
             return matchesSearch && matchesCategory;
         });
