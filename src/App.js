@@ -8,6 +8,8 @@ import SavedBasketPage from './pages/SavedBasketPage';
 import SavedBasketDetailPage from './pages/SavedBasketDetailPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import LoginForm from './components/LoginForm';
+import RegisterForm from './components/RegisterForm';
 
 function App() {
   return (
@@ -21,6 +23,8 @@ function App() {
           <Route path="/basket" element={<BasketPage />} />
           <Route path="/saved-baskets" element={<SavedBasketPage />} />
           <Route path="/saved-baskets/:basketId" element={<SavedBasketDetailPage />} />
+          <Route path='/login' element={<LoginForm />} />
+          <Route path='/register' element={<RegisterForm />} />
         </Routes>
         <ToastContainer />
       </div>

@@ -1,4 +1,3 @@
-// Import all images from assets/images directory
 import botmiImg from './images/botmi.jpg';
 import cachuaImg from './images/cachua.jpg';
 import caImg from './images/ca.jpg';
@@ -22,8 +21,10 @@ import thitgaImg from './images/thitga.jpg';
 import thitheoImg from './images/thitheo.jpg';
 import toiImg from './images/toi.jpg';
 import tomImg from './images/tom.jpg';
+import bhxLogo from './images/bachhoaxanh.webp';
+import coopfoodLogo from './images/coopfood.jpg';
+import winmartLogo from './images/winmart.jpg';
 
-// Export all images as a single object
 export const images = {
     botmi: botmiImg,
     cachua: cachuaImg,
@@ -47,10 +48,12 @@ export const images = {
     thitga: thitgaImg,
     thitheo: thitheoImg,
     toi: toiImg,
-    tom: tomImg
+    tom: tomImg,
+    bhx: bhxLogo,
+    coopfood: coopfoodLogo,
+    winmart: winmartLogo
 };
 
-// Unified and consistent ingredients list
 export const ingredientsList = [
     { id: 1, name: "Bột Mì", category: "Bột", restaurantCount: 21, image: images.botmi },
     { id: 2, name: "Gạo", category: "Gạo", restaurantCount: 45, image: images.gao },
@@ -115,6 +118,15 @@ export const dishesList = [
     }
 ];
 
+// Sample data for restaurants
+export const restaurantsList = [
+    { id: 1, name: "Bách hóa xanh", image: images.bhx },
+    { id: 2, name: "Coopfood", image: images.coopfood },
+    { id: 3, name: "Winmart", image: images.winmart }
+];
+
+
+
 export const getIngredientById = (id) => {
     return ingredientsList.find(ingredient => ingredient.id === id);
 };
@@ -137,5 +149,6 @@ export default {
     ingredientsList,
     dishesList,
     getIngredientById,
-    getDishWithIngredients
+    getDishWithIngredients,
+    restaurantsList
 };
