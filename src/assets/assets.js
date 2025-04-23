@@ -55,21 +55,21 @@ export const images = {
 };
 
 export const ingredientsList = [
-    { id: 1, name: "Bột Mì", category: "Bột", restaurantCount: 21, image: images.botmi },
-    { id: 2, name: "Gạo", category: "Gạo", restaurantCount: 45, image: images.gao },
-    { id: 3, name: "Dầu Ăn", category: "Dầu ăn", restaurantCount: 36, image: images.dauan },
-    { id: 4, name: "Nước Mắm", category: "Gia vị", restaurantCount: 50, image: images.nuocmam },
-    { id: 5, name: "Thịt Bò", category: "Thịt", restaurantCount: 47, image: images.thitbo },
-    { id: 6, name: "Thịt Gà", category: "Thịt", restaurantCount: 52, image: images.thitga },
-    { id: 7, name: "Tỏi", category: "Rau củ", restaurantCount: 55, image: images.toi },
-    { id: 8, name: "Cà Chua", category: "Rau củ", restaurantCount: 40, image: images.cachua },
-    { id: 9, name: "Muối", category: "Gia vị", restaurantCount: 42, image: images.muoi },
-    { id: 10, name: "Hạt Nêm", category: "Gia vị", restaurantCount: 33, image: images.hatnem },
-    { id: 11, name: "Đường", category: "Gia vị", restaurantCount: 28, image: images.duong },
-    { id: 12, name: "Cà Rốt", category: "Rau củ", restaurantCount: 38, image: images.carot },
-    { id: 13, name: "Thịt Heo", category: "Thịt", restaurantCount: 49, image: images.thitheo },
-    { id: 14, name: "Tôm", category: "Hải sản", restaurantCount: 44, image: images.tom },
-    { id: 15, name: "Cá", category: "Hải sản", restaurantCount: 41, image: images.ca }
+    { id: 1, name: "Bột Mì", category: "Bột", restaurantCount: 21, image: images.botmi, unit: "Kg" },
+    { id: 2, name: "Gạo", category: "Gạo", restaurantCount: 45, image: images.gao, unit: "Kg" },
+    { id: 3, name: "Dầu Ăn", category: "Dầu ăn", restaurantCount: 36, image: images.dauan, unit: "Lít" },
+    { id: 4, name: "Nước Mắm", category: "Gia vị", restaurantCount: 50, image: images.nuocmam, unit: "Lít" },
+    { id: 5, name: "Thịt Bò", category: "Thịt", restaurantCount: 47, image: images.thitbo, unit: "Kg" },
+    { id: 6, name: "Thịt Gà", category: "Thịt", restaurantCount: 52, image: images.thitga, unit: "Kg" },
+    { id: 7, name: "Tỏi", category: "Rau củ", restaurantCount: 55, image: images.toi, unit: "Kg" },
+    { id: 8, name: "Cà Chua", category: "Rau củ", restaurantCount: 40, image: images.cachua, unit: "Kg" },
+    { id: 9, name: "Muối", category: "Gia vị", restaurantCount: 42, image: images.muoi, unit: "Kg" },
+    { id: 10, name: "Hạt Nêm", category: "Gia vị", restaurantCount: 33, image: images.hatnem, unit: "Kg" },
+    { id: 11, name: "Đường", category: "Gia vị", restaurantCount: 28, image: images.duong, unit: "Kg" },
+    { id: 12, name: "Cà Rốt", category: "Rau củ", restaurantCount: 38, image: images.carot, unit: "Kg" },
+    { id: 13, name: "Thịt Heo", category: "Thịt", restaurantCount: 49, image: images.thitheo, unit: "Kg" },
+    { id: 14, name: "Tôm", category: "Hải sản", restaurantCount: 44, image: images.tom, unit: "Kg" },
+    { id: 15, name: "Cá", category: "Hải sản", restaurantCount: 41, image: images.ca, unit: "Kg " }
 ];
 
 // Dishes list with references to ingredients

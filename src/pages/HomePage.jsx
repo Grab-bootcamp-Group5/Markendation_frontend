@@ -6,23 +6,19 @@ import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import cartIcon from '../assets/images/cart.png';
-import ShoppingModal from '../components/ShoppingModal';
+import { useModal } from '../context/ModalContext';
 
 const HomePage = () => {
     const ingredients = ingredientsList;
     const dishes = dishesList;
     const restaurants = restaurantsList;
+    const { openModal } = useModal();
 
     const ingredientsRef = useRef(null);
     const dishesRef = useRef(null);
 
     const [ingredientsScroll, setIngredientsScroll] = useState({ left: false, right: true });
     const [dishesScroll, setDishesScroll] = useState({ left: false, right: true });
-
-    // State for modals
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalType, setModalType] = useState('');
-    const [modalData, setModalData] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
 
     const scrollIngredientsLeft = () => {
@@ -81,7 +77,6 @@ const HomePage = () => {
         }
     };
 
-    // State for image upload
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
     const [isUploading, setIsUploading] = useState(false);
@@ -91,13 +86,11 @@ const HomePage = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Check file size (5MB limit)
         if (file.size > 5 * 1024 * 1024) {
             alert('Kích thước file quá lớn. Vui lòng chọn file nhỏ hơn 5MB.');
             return;
         }
 
-        // Check if file is an image
         if (!file.type.startsWith('image/')) {
             alert('Vui lòng chọn một file hình ảnh.');
             return;
@@ -105,7 +98,6 @@ const HomePage = () => {
 
         setSelectedImage(file);
 
-        // Create preview URL
         const reader = new FileReader();
         reader.onloadend = () => {
             setPreviewUrl(reader.result);
@@ -113,7 +105,9 @@ const HomePage = () => {
         reader.readAsDataURL(file);
     };
 
-    // Handle image upload
+    const handleResetImage = () => { setSelectedImage(null); setPreviewUrl(''); };
+
+
     const handleUpload = async () => {
         if (!selectedImage) {
             alert('Vui lòng chọn một hình ảnh trước.');
@@ -135,10 +129,10 @@ const HomePage = () => {
                 randomIngredients.push(ingredients[randomIndex]);
             }
 
-            // Open modal with random ingredients
-            setModalType('ingredients');
-            setModalData(randomIngredients);
-            setIsModalOpen(true);
+            openModal('ingredients', randomIngredients);
+
+            setSelectedImage(null);
+            setPreviewUrl('');
 
         } catch (error) {
             console.error('Upload failed:', error);
@@ -146,12 +140,6 @@ const HomePage = () => {
         } finally {
             setIsUploading(false);
         }
-    };
-
-    // Reset the image selection
-    const handleResetImage = () => {
-        setSelectedImage(null);
-        setPreviewUrl('');
     };
 
     // Handle text search
@@ -163,18 +151,18 @@ const HomePage = () => {
 
         setSearchQuery(searchInput);
 
-        // For demo purposes, let's check if the search matches any dish names
+        // check if the search matches any dish names
         const matchedDish = dishes.find(dish =>
             dish.name.toLowerCase().includes(searchInput.toLowerCase())
         );
 
         if (matchedDish) {
-            // If we found a matching dish, open the dish modal
             const dishWithIngredients = getDishWithIngredients(matchedDish.id);
-            setModalType('dish');
-            setModalData(dishWithIngredients);
+            if (dishWithIngredients) {
+                openModal('dish', dishWithIngredients);
+            }
         } else {
-            // Otherwise, show a few random ingredients as search results
+            // Simulate API call
             const randomIngredients = [];
             const numIngredients = Math.floor(Math.random() * 3) + 2; // 2-4 random ingredients
 
@@ -183,11 +171,11 @@ const HomePage = () => {
                 randomIngredients.push(ingredients[randomIndex]);
             }
 
-            setModalType('ingredients');
-            setModalData(randomIngredients);
+            openModal('search', randomIngredients, searchInput);
         }
 
-        setIsModalOpen(true);
+        // Clear search input
+        e.target.querySelector('input').value = '';
     };
 
     return (
@@ -213,6 +201,7 @@ const HomePage = () => {
                                         image={ingredient.image}
                                         category={ingredient.category}
                                         restaurantCount={ingredient.restaurantCount}
+                                        unit={ingredient.unit || (ingredient.category === "Dầu ăn" ? "Lít" : "KG")}
                                     />
                                 </div>
                             ))}
@@ -247,27 +236,25 @@ const HomePage = () => {
                             className="flex space-x-4 overflow-hidden pb-4"
                             onScroll={() => handleScroll(dishesRef, setDishesScroll)}
                         >
-                            {dishes.map((dish) => (
-                                <div key={dish.id} className="flex-shrink-0 w-64">
-                                    <div
-                                        className="cursor-pointer"
-                                        onClick={() => {
-                                            const dishData = getDishWithIngredients(dish.id);
-                                            setModalType('dish');
-                                            setModalData(dishData);
-                                            setIsModalOpen(true);
-                                        }}
-                                    >
-                                        <ProductCard
-                                            id={dish.id}
-                                            name={dish.name}
-                                            image={dish.image}
-                                            category={dish.category}
-                                            restaurantCount={dish.restaurantCount}
-                                        />
+                            {dishes.map((dish) => {
+                                const dishWithIngredients = getDishWithIngredients(dish.id);
+                                return (
+                                    <div key={dish.id} className="flex-shrink-0 w-64">
+                                        <div
+                                            className="cursor-pointer"
+                                            onClick={() => openModal('dish', { id: dish.id, name: dish.name, image: dish.image })}
+                                        >
+                                            <ProductCard
+                                                id={dish.id}
+                                                name={dish.name}
+                                                image={dish.image}
+                                                category={dish.category}
+                                                restaurantCount={dish.restaurantCount}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         {dishesScroll.left && (
@@ -407,15 +394,6 @@ const HomePage = () => {
                     </div>
                 </section>
             </div>
-
-            {/* Shopping Modal */}
-            <ShoppingModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                type={modalType}
-                itemData={modalData}
-                searchQuery={searchQuery}
-            />
 
             <Footer />
         </div>

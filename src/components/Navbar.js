@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import logoImage from '../assets/images/logo.png';
 
 const Navbar = () => {
@@ -56,7 +56,7 @@ const Navbar = () => {
 
             {/* Auth Button */}
             <div>
-                <button className="bg-gray-900 text-white px-6 py-2 rounded-full font-medium">Đăng nhập/Đăng kí</button>
+                <Link to="/login" className="bg-gray-900 text-white px-6 py-2 rounded-full font-medium inline-block">Đăng nhập/Đăng kí</Link>
             </div>
         </nav>
     );

@@ -48,7 +48,7 @@ export const BasketProvider = ({ children }) => {
                     ingredients: [...prevState.ingredients, {
                         ...ingredient,
                         quantity: 1,
-                        unit: ingredient.category === "Dầu ăn" ? "Lít" : "KG"
+                        unit: ingredient.unit
                     }]
                 };
             }
