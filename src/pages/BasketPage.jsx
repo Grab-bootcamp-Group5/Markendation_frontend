@@ -270,13 +270,12 @@ const BasketPage = () => {
 
                         {/* Checkout Button */}
                         <div className="py-4 flex justify-center border-t border-gray-200 mt-4">
-                            <button
-                                onClick={startCheckout}
-                                className="bg-green-600 text-white px-6 py-2 flex items-center justify-center rounded-md"
-                            >
-                                <HiOutlineCalculator className="w-5 h-5 mr-2" />
-                                Bắt đầu tính toán
-                            </button>
+                            <Link to='/calculate'>
+                                <button className="bg-green-600 text-white px-6 py-2 flex items-center justify-center rounded-md"                            >
+                                    <HiOutlineCalculator className="w-5 h-5 mr-2" />
+                                    Bắt đầu tính toán
+                                </button>
+                            </Link>
                         </div>
                     </div>
                 )}

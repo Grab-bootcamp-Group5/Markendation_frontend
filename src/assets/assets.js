@@ -118,14 +118,44 @@ export const dishesList = [
     }
 ];
 
-// Sample data for restaurants
 export const restaurantsList = [
-    { id: 1, name: "Bách hóa xanh", image: images.bhx },
-    { id: 2, name: "Coopfood", image: images.coopfood },
-    { id: 3, name: "Winmart", image: images.winmart }
+    {
+        id: 1,
+        name: "Bách hóa xanh",
+        image: images.bhx,
+        address: '1 Nguyễn Hữu Cảnh, Quận 1, TP Hồ Chí Minh',
+        rating: 4,
+        match: 80,
+        totalPrice: 100000
+    },
+    {
+        id: 2,
+        name: "Coopfood",
+        image: images.coopfood,
+        address: '1 Nguyễn Hữu Cảnh, Quận 1, TP Hồ Chí Minh',
+        rating: 4,
+        match: 80,
+        totalPrice: 100000
+    },
+    {
+        id: 3,
+        name: "Winmart",
+        image: images.winmart,
+        address: '1 Nguyễn Hữu Cảnh, Quận 1, TP Hồ Chí Minh',
+        rating: 4,
+        match: 80,
+        totalPrice: 100000
+    },
+    {
+        id: 4,
+        name: "Bách hóa xanh",
+        image: images.bhx,
+        address: '1 Nguyễn Hữu Cảnh, Quận 1, TP Hồ Chí Minh',
+        rating: 4,
+        match: 90,
+        totalPrice: 100000
+    }
 ];
-
-
 
 export const getIngredientById = (id) => {
     return ingredientsList.find(ingredient => ingredient.id === id);

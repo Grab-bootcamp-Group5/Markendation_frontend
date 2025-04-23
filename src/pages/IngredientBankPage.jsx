@@ -27,7 +27,8 @@ const IngredientBankPage = () => {
                     name: ingredient.name,
                     image: ingredient.image,
                     restaurantCount: ingredient.restaurantCount,
-                    category: ingredient.category
+                    category: ingredient.category,
+                    unit: ingredient.unit
                 }));
 
                 setIngredients(data);
@@ -107,12 +108,12 @@ const IngredientBankPage = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {filteredIngredients.map((ingredient) => (
                                 <ProductCard
-                                    key={ingredient.id}
                                     id={ingredient.id}
                                     image={ingredient.image}
                                     name={ingredient.name}
                                     category={ingredient.category}
                                     restaurantCount={ingredient.restaurantCount}
+                                    unit={ingredient.unit}
                                 />
                             ))}
                         </div>

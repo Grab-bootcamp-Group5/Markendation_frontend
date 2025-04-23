@@ -1,7 +1,7 @@
 import React from 'react';
 import { useModal } from '../context/ModalContext';
 
-const ProductCard = ({ image, name, restaurantCount, id, category, unit = "KG" }) => {
+const ProductCard = ({ image, name, restaurantCount, id, category, unit }) => {
     const { openModal } = useModal();
 
     const addToCart = () => {
@@ -11,7 +11,7 @@ const ProductCard = ({ image, name, restaurantCount, id, category, unit = "KG" }
             image,
             category,
             restaurantCount,
-            unit: unit
+            unit
         }]);
     };
 

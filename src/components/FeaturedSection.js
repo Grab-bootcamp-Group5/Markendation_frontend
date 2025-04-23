@@ -38,6 +38,7 @@ const FeaturedSection = ({ ingredients }) => {
                         image={ingredient.image}
                         name={ingredient.name}
                         restaurantCount={ingredient.restaurantCount}
+                        unit={ingredient.unit}
                     />
                 ))}
             </div>

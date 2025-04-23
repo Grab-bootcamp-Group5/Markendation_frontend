@@ -11,6 +11,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import { ModalProvider } from './context/ModalContext';
+import CheckoutCalculation from './pages/CheckoutCalculationPage';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/saved-baskets/:basketId" element={<SavedBasketDetailPage />} />
             <Route path='/login' element={<LoginForm />} />
             <Route path='/register' element={<RegisterForm />} />
+            <Route path='/calculate' element={<CheckoutCalculation />} />
           </Routes>
           <ToastContainer />
         </div>

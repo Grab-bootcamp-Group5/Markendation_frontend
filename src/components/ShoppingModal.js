@@ -83,7 +83,7 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                         name: ingredient.name,
                         image: ingredient.image,
                         quantity: quantity,
-                        unit: ingredient.unit || (ingredient.category === "Dầu ăn" ? "Lít" : "KG"),
+                        unit: ingredient.unit,
                         category: ingredient.category
                     });
                 }
@@ -104,7 +104,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
         onClose();
     };
 
-    // Helper to get the unit for display
     const getUnit = () => {
         if (type === 'dish') {
             return 'phần';
