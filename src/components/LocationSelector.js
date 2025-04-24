@@ -21,12 +21,15 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
             initMap();
         }
     }, [showLocationModal]);
-    console.log('api', process.env.REACT_APP_GOOGLE_API_KEY)
     // Load Google Maps API
+    // Sửa đổi useEffect tải Google Maps API
     useEffect(() => {
-        if (!window.google) {
+        // Kiểm tra xem script đã tồn tại chưa để tránh tải lại
+        const existingScript = document.getElementById('google-maps-script');
+        if (!window.google && !existingScript) {
             const googleMapScript = document.createElement('script');
-            googleMapScript.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_API_KEY}&libraries=places`;
+            googleMapScript.id = 'google-maps-script'; // Thêm ID để dễ tham chiếu
+            googleMapScript.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBW_Zu65x0Fx-SmuPHiMHwaQ2lTu6qfeCA&libraries=places`;
             googleMapScript.async = true;
             googleMapScript.defer = true;
             googleMapScript.onload = () => {
@@ -35,15 +38,20 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
                 }
             };
             document.body.appendChild(googleMapScript);
-
-            return () => {
-                document.body.removeChild(googleMapScript);
-            };
+        } else if (window.google && showLocationModal && !map) {
+            // Nếu API đã được tải và modal đang mở nhưng map chưa khởi tạo
+            initMap();
         }
-    }, []);
+
+        // Không cần xóa script khi component unmount vì có thể cần tái sử dụng
+        return () => { };
+    }, [showLocationModal]);
 
     const initMap = () => {
-        if (!mapRef.current) return;
+        if (!mapRef.current || !window.google) {
+            console.log('Map reference or Google API not available');
+            return;
+        }
 
         // Initialize the map
         const mapInstance = new window.google.maps.Map(mapRef.current, {
