@@ -1,24 +1,25 @@
-import axiosPublic from './axiosPublic';
 import axiosPrivate from './axiosPrivate';
 
 export const userService = {
-    // Đăng ký người dùng mới
-    register: (userData) => {
-        return axiosPublic.post('/user/register', userData);
+    // Get user information
+    getUserInfo: async () => {
+        try {
+            const response = await axiosPrivate.get('/user');
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     },
 
-    // Đăng nhập
-    login: (credentials) => {
-        return axiosPublic.post('/user/login', credentials);
-    },
-
-    // Lấy thông tin người dùng
-    getUserInfo: () => {
-        return axiosPrivate.get('/user');
-    },
-
-    // Cập nhật vị trí người dùng
-    updateUserLocation: (locationData) => {
-        return axiosPrivate.post('/user/location', locationData);
+    // Update user location
+    updateUserLocation: async (locationData) => {
+        try {
+            const response = await axiosPrivate.post('/user/location', locationData);
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     }
 };
+
+export default userService;

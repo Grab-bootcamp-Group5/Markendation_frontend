@@ -6,8 +6,7 @@ import ProductCard from '../components/ProductCard';
 import Footer from '../components/Footer';
 import IngredientCategories from '../components/IngredientCategories';
 import FeaturedSection from '../components/FeaturedSection';
-import images from '../assets/assets';
-
+import { ingredientService } from '../services/ingredientService';
 
 const IngredientBankPage = () => {
     const [ingredients, setIngredients] = useState([]);
@@ -15,33 +14,64 @@ const IngredientBankPage = () => {
     const [error, setError] = useState(null);
     const [activeCategory, setActiveCategory] = useState("Tất cả");
     const [filteredIngredients, setFilteredIngredients] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const pageSize = 30;
 
-    // fetch api
-    const ingredientsList = images.ingredientsList
-
+    // Fetch ingredients from API
     useEffect(() => {
-        setTimeout(() => {
+        const fetchIngredients = async () => {
+            setLoading(true);
+            setError(null);
+
             try {
-                const data = ingredientsList.map((ingredient, index) => ({
+                const data = await ingredientService.getIngredients(currentPage, pageSize);
+
+                // Map the response to match the format needed by the components
+                const mappedData = data.map(ingredient => ({
                     id: ingredient.id,
                     name: ingredient.name,
-                    image: ingredient.image,
-                    restaurantCount: ingredient.restaurantCount,
-                    category: ingredient.category,
-                    unit: ingredient.unit
+                    vietnameseName: ingredient.vietnameseName,
+                    unit: ingredient.unit,
+                    // Set default values for fields not provided by the API
+                    image: ingredient.image || '/images/default-ingredient.jpg',
+                    category: ingredient.category || 'Khác', // Default category
+                    restaurantCount: ingredient.restaurantCount || 5 // Default count
                 }));
 
-                setIngredients(data);
-                setFilteredIngredients(data);
-                setLoading(false);
+                setIngredients(prevIngredients =>
+                    currentPage === 1 ? mappedData : [...prevIngredients, ...mappedData]
+                );
+
+                if (currentPage === 1) {
+                    setFilteredIngredients(mappedData);
+                } else {
+                    setFilteredIngredients(prevFiltered => {
+                        // Apply current category filter to new data
+                        const newFilteredData = activeCategory === "Tất cả" ?
+                            mappedData :
+                            mappedData.filter(item => item.category === activeCategory);
+
+                        return [...prevFiltered, ...newFilteredData];
+                    });
+                }
+
+                // Assuming the API returns total pages information
+                // If not, you might need to calculate this based on data length
+                setTotalPages(Math.ceil(data.length / pageSize) || 1);
+
             } catch (error) {
                 console.error("Error loading ingredients:", error);
                 setError("Có lỗi xảy ra khi tải dữ liệu nguyên liệu. Vui lòng thử lại sau.");
+            } finally {
                 setLoading(false);
             }
-        }, 800);
-    }, []);
+        };
 
+        fetchIngredients();
+    }, [currentPage]);
+
+    // Filter ingredients when category changes
     useEffect(() => {
         if (activeCategory === "Tất cả") {
             setFilteredIngredients(ingredients);
@@ -64,12 +94,19 @@ const IngredientBankPage = () => {
 
         const filtered = ingredients.filter(item => {
             const matchesSearch =
-                item.name.toLowerCase().includes(searchTerm.toLowerCase());
+                (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (item.vietnameseName && item.vietnameseName.toLowerCase().includes(searchTerm.toLowerCase()));
             const matchesCategory = activeCategory === "Tất cả" || item.category === activeCategory;
             return matchesSearch && matchesCategory;
         });
 
         setFilteredIngredients(filtered);
+    };
+
+    const loadMoreIngredients = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(prevPage => prevPage + 1);
+        }
     };
 
     return (
@@ -87,7 +124,7 @@ const IngredientBankPage = () => {
                         </div>
                     )}
 
-                    <FeaturedSection ingredients={ingredients} />
+                    <FeaturedSection ingredients={ingredients.slice(0, 4)} />
 
                     <IngredientCategories
                         activeCategory={activeCategory}
@@ -98,25 +135,40 @@ const IngredientBankPage = () => {
                         {activeCategory === "Tất cả" ? "Tất Cả Nguyên Liệu" : `Nguyên Liệu ${activeCategory}`}
                     </h2>
 
-                    {loading ? (
+                    {loading && currentPage === 1 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {[1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
                                 <div key={index} className="w-full h-64 bg-gray-200 animate-pulse rounded-lg"></div>
                             ))}
                         </div>
                     ) : filteredIngredients.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {filteredIngredients.map((ingredient) => (
-                                <ProductCard
-                                    id={ingredient.id}
-                                    image={ingredient.image}
-                                    name={ingredient.name}
-                                    category={ingredient.category}
-                                    restaurantCount={ingredient.restaurantCount}
-                                    unit={ingredient.unit}
-                                />
-                            ))}
-                        </div>
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                {filteredIngredients.map((ingredient) => (
+                                    <ProductCard
+                                        key={ingredient.id}
+                                        id={ingredient.id}
+                                        image={ingredient.image}
+                                        name={ingredient.vietnameseName || ingredient.name}
+                                        category={ingredient.category}
+                                        restaurantCount={ingredient.restaurantCount}
+                                        unit={ingredient.unit}
+                                    />
+                                ))}
+                            </div>
+
+                            {currentPage < totalPages && (
+                                <div className="mt-8 text-center">
+                                    <button
+                                        onClick={loadMoreIngredients}
+                                        className="px-6 py-3 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors"
+                                        disabled={loading}
+                                    >
+                                        {loading ? 'Đang tải...' : 'Xem thêm nguyên liệu'}
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <div className="text-center py-12">
                             <p className="text-gray-500 text-lg">Không tìm thấy nguyên liệu phù hợp</p>

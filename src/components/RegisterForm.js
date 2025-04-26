@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
-import StatisticsSidebar from './StatisticsSidebar';
-import { images } from '../assets/assets';
 import { FcGoogle } from "react-icons/fc";
 import { HiArrowNarrowRight } from "react-icons/hi";
-
+import { useNavigate } from 'react-router-dom';
+import StatisticsSidebar from './StatisticsSidebar';
+import { images } from '../assets/assets';
+import { authService } from '../services/authService';
 
 const RegisterForm = () => {
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+
     const [formData, setFormData] = useState({
         username: '',
         email: '',
@@ -25,10 +30,55 @@ const RegisterForm = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const validateForm = () => {
+        // Password confirmation validation
+        if (formData.password !== formData.confirmPassword) {
+            setError('Mật khẩu xác nhận không khớp.');
+            return false;
+        }
+
+        // Password strength validation
+        if (formData.password.length < 8) {
+            setError('Mật khẩu phải có ít nhất 8 ký tự.');
+            return false;
+        }
+
+        // Terms agreement validation
+        if (!formData.agreeTerms) {
+            setError('Bạn cần đồng ý với điều khoản dịch vụ.');
+            return false;
+        }
+
+        return true;
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Xử lý logic đăng ký tại đây
-        console.log('Form data submitted:', formData);
+        setError(null);
+
+        // Validate form before submission
+        if (!validateForm()) return;
+
+        setIsLoading(true);
+
+        try {
+            await authService.register({
+                username: formData.username, // Will be mapped to fullname in the service
+                email: formData.email,
+                password: formData.password
+            });
+
+            // Redirect to home page after successful registration
+            navigate('/');
+        } catch (error) {
+            console.error('Registration failed:', error);
+            setError(
+                error.response?.data?.message ||
+                'Đăng ký không thành công. Vui lòng thử lại sau.'
+            );
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const togglePasswordVisibility = () => {
@@ -38,6 +88,8 @@ const RegisterForm = () => {
     const toggleConfirmPasswordVisibility = () => {
         setShowConfirmPassword(!showConfirmPassword);
     };
+
+    // Testimonial for register page
     const registerTestimonial = {
         quote: "Markendation đã giúp tôi quản lý việc nấu ăn hàng ngày dễ dàng hơn rất nhiều. Tôi tiết kiệm được thời gian và không còn lãng phí thực phẩm nữa!",
         author: "Nguyễn Thành",
@@ -45,11 +97,16 @@ const RegisterForm = () => {
         initials: "NT"
     };
 
+    // Handle Google registration (placeholder for OAuth implementation)
+    const handleGoogleRegister = () => {
+        // Implementation for Google OAuth would go here
+        console.log('Google registration clicked');
+    };
+
     return (
         <div className="min-h-screen flex flex-col md:flex-row border border-gray-200 shadow-lg rounded-xl overflow-hidden">
             {/* Left side - Form */}
             <div className="w-full md:w-1/2 p-8 flex flex-col justify-center items-center bg-white border-r border-gray-200">
-
                 <div className="max-w-md w-full">
                     <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm mb-6">
                         <h1 className="text-3xl font-bold mb-2 text-gray-800">Tạo tài khoản</h1>
@@ -57,9 +114,15 @@ const RegisterForm = () => {
                             Đã có tài khoản? <a href="/login" className="text-orange-500 hover:underline font-medium">Đăng nhập</a>
                         </p>
 
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg border border-red-200">
+                                {error}
+                            </div>
+                        )}
+
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
-                                <label htmlFor="username" className="block text-gray-700 text-sm font-medium mb-2">Tên đăng nhập</label>
+                                <label htmlFor="username" className="block text-gray-700 text-sm font-medium mb-2">Họ và tên</label>
                                 <input
                                     type="text"
                                     id="username"
@@ -67,7 +130,7 @@ const RegisterForm = () => {
                                     value={formData.username}
                                     onChange={handleChange}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                                    placeholder="Nhập tên đăng nhập"
+                                    placeholder="Nhập họ và tên của bạn"
                                     required
                                 />
                             </div>
@@ -86,8 +149,7 @@ const RegisterForm = () => {
                                 />
                             </div>
 
-
-                            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="relative">
                                     <label htmlFor="password" className="block text-gray-700 text-sm font-medium mb-2">Mật khẩu</label>
                                     <div className="relative">
@@ -134,12 +196,34 @@ const RegisterForm = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            <div className="mb-6">
+                                <label className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        name="agreeTerms"
+                                        checked={formData.agreeTerms}
+                                        onChange={handleChange}
+                                        className="h-5 w-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                                        required
+                                    />
+                                    <span className="ml-2 text-sm text-gray-700">
+                                        Tôi đồng ý với <a href="/terms" className="text-orange-500 hover:underline">Điều khoản dịch vụ</a> và <a href="/privacy" className="text-orange-500 hover:underline">Chính sách bảo mật</a>
+                                    </span>
+                                </label>
+                            </div>
+
                             <button
                                 type="submit"
-                                className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center"
+                                disabled={isLoading}
+                                className={`w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                                Tạo tài khoản
-                                <HiArrowNarrowRight className="h-5 w-5 ml-2" />
+                                {isLoading ? 'Đang xử lý...' : (
+                                    <>
+                                        Tạo tài khoản
+                                        <HiArrowNarrowRight className="h-5 w-5 ml-2" />
+                                    </>
+                                )}
                             </button>
                         </form>
 
@@ -148,7 +232,10 @@ const RegisterForm = () => {
                                 <div className="border-t border-gray-300 absolute w-full"></div>
                                 <div className="bg-white px-4 relative text-gray-500 text-sm">Hoặc</div>
                             </div>
-                            <button className="w-full border border-gray-300 bg-white text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-50 transition duration-300 flex items-center justify-center">
+                            <button
+                                className="w-full border border-gray-300 bg-white text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-50 transition duration-300 flex items-center justify-center"
+                                onClick={handleGoogleRegister}
+                            >
                                 <FcGoogle className="h-5 w-5 mr-2" />
                                 Đăng ký với Google
                             </button>
@@ -157,10 +244,7 @@ const RegisterForm = () => {
                 </div>
             </div>
 
-            <StatisticsSidebar
-                logo={images.logo}
-                testimonial={registerTestimonial}
-            />
+            <StatisticsSidebar logo={images.logo} testimonial={registerTestimonial} />
         </div>
     );
 };

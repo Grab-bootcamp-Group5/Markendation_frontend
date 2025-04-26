@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { getIngredientById, getDishWithIngredients, images } from '../assets/assets';
+import { basketService } from '../services/basketService';
+import { useBasket } from '../context/BasketContext';
 
 const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
     const [quantity, setQuantity] = useState(1);
     const [dishWithIngredients, setDishWithIngredients] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const { basketItems } = useBasket();
 
     useEffect(() => {
         if (isOpen) {
@@ -38,70 +42,92 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
         }
     };
 
-    const addToCart = () => {
-        const storedBasket = localStorage.getItem('basketItems');
-        let basketItems = storedBasket ? JSON.parse(storedBasket) : {
-            ingredients: [],
-            dishes: {}
-        };
-
-        if (type === 'dish' && dishWithIngredients) {
-            if (basketItems.dishes[dishWithIngredients.id]) {
-                toast.warning(`${dishWithIngredients.name} đã có trong giỏ hàng!`);
-                return;
-            }
-
-            const formattedIngredients = dishWithIngredients.ingredients.map(ingredient => ({
-                id: ingredient.id,
-                name: ingredient.name,
-                image: ingredient.image,
-                quantity: 1,
-                unit: ingredient.unit,
-                category: ingredient.category
-            }));
-
-            basketItems.dishes[dishWithIngredients.id] = {
-                id: dishWithIngredients.id,
-                name: dishWithIngredients.name,
-                image: dishWithIngredients.image,
-                servings: quantity,
-                ingredients: formattedIngredients
+    const addToCart = async () => {
+        setIsLoading(true);
+        try {
+            const storedBasket = localStorage.getItem('basketItems');
+            let basketItems = storedBasket ? JSON.parse(storedBasket) : {
+                ingredients: [],
+                dishes: {}
             };
 
-            toast.success(`Đã thêm ${dishWithIngredients.name} vào giỏ hàng!`);
-        } else if ((type === 'ingredients' || type === 'search') && itemData) {
-            const ingredientsArray = Array.isArray(itemData) ? itemData : [itemData];
-
-            ingredientsArray.forEach(ingredient => {
-                const existingItemIndex = basketItems.ingredients.findIndex(item => item.id === ingredient.id);
-
-                if (existingItemIndex !== -1) {
-                    basketItems.ingredients[existingItemIndex].quantity += quantity;
-                } else {
-                    basketItems.ingredients.push({
-                        id: ingredient.id,
-                        name: ingredient.name,
-                        image: ingredient.image,
-                        quantity: quantity,
-                        unit: ingredient.unit,
-                        category: ingredient.category
-                    });
+            if (type === 'dish' && dishWithIngredients) {
+                if (basketItems.dishes[dishWithIngredients.id]) {
+                    toast.warning(`${dishWithIngredients.name} đã có trong giỏ hàng!`);
+                    setIsLoading(false);
+                    return;
                 }
-            });
 
-            if (type === 'search' && searchQuery) {
-                toast.success(`Đã thêm nguyên liệu cho "${searchQuery}" vào giỏ hàng!`);
-            } else {
-                toast.success(`Đã thêm ${ingredientsArray.length > 1 ? 'các nguyên liệu' : ingredientsArray[0].name} vào giỏ hàng!`);
+                const formattedIngredients = dishWithIngredients.ingredients.map(ingredient => ({
+                    id: ingredient.id,
+                    name: ingredient.name,
+                    image: ingredient.image,
+                    quantity: 1,
+                    unit: ingredient.unit,
+                    category: ingredient.category
+                }));
+
+                basketItems.dishes[dishWithIngredients.id] = {
+                    id: dishWithIngredients.id,
+                    name: dishWithIngredients.name,
+                    image: dishWithIngredients.image,
+                    servings: quantity,
+                    ingredients: formattedIngredients
+                };
+
+                // Note: Add API call for dish when endpoint is available
+
+                toast.success(`Đã thêm ${dishWithIngredients.name} vào giỏ hàng!`);
+            } else if ((type === 'ingredients' || type === 'search') && itemData) {
+                const ingredientsArray = Array.isArray(itemData) ? itemData : [itemData];
+
+                // Update local storage
+                for (const ingredient of ingredientsArray) {
+                    const existingItemIndex = basketItems.ingredients.findIndex(item => item.id === ingredient.id);
+
+                    if (existingItemIndex !== -1) {
+                        basketItems.ingredients[existingItemIndex].quantity += quantity;
+                    } else {
+                        basketItems.ingredients.push({
+                            id: ingredient.id,
+                            name: ingredient.name,
+                            image: ingredient.image,
+                            quantity: quantity,
+                            unit: ingredient.unit,
+                            category: ingredient.category
+                        });
+                    }
+
+                    // Send to API if user is logged in
+                    if (localStorage.getItem('accessToken')) {
+                        await basketService.addIngredient({
+                            id: ingredient.id,
+                            vietnameseName: ingredient.vietnameseName || ingredient.name,
+                            unit: ingredient.unit || 'piece',
+                            quantity: quantity
+                        });
+                    }
+                }
+
+                if (type === 'search' && searchQuery) {
+                    toast.success(`Đã thêm nguyên liệu cho "${searchQuery}" vào giỏ hàng!`);
+                } else {
+                    toast.success(`Đã thêm ${ingredientsArray.length > 1 ? 'các nguyên liệu' : ingredientsArray[0].name} vào giỏ hàng!`);
+                }
             }
+
+            localStorage.setItem('basketItems', JSON.stringify(basketItems));
+
+            const event = new CustomEvent('basketUpdated');
+            window.dispatchEvent(event);
+
+            onClose();
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            toast.error('Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại.');
+        } finally {
+            setIsLoading(false);
         }
-
-        localStorage.setItem('basketItems', JSON.stringify(basketItems));
-
-        const event = new CustomEvent('basketUpdated');
-        window.dispatchEvent(event);
-
-        onClose();
     };
 
     const getUnit = () => {
@@ -229,12 +255,20 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                         {/* Add to cart button */}
                         <button
                             onClick={addToCart}
+                            disabled={isLoading}
                             className="w-full bg-green-600 text-white py-4 rounded-full font-bold hover:bg-green-700 transition-colors flex items-center justify-center"
                         >
-                            <span className="mr-2">
-                                <img className="h-6 w-6" src={images.cart} />
-                            </span>
-                            Thêm vào giỏ hàng
+                            {isLoading ? (
+                                <svg className="animate-spin h-5 w-5 text-white mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : (
+                                <span className="mr-2">
+                                    <img className="h-6 w-6" src={images.cart} />
+                                </span>
+                            )}
+                            {isLoading ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
                         </button>
                     </div>
 

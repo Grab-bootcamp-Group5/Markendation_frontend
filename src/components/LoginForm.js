@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
-import StatisticsSidebar from './StatisticsSidebar';
-import { images } from '../assets/assets';
 import { FcGoogle } from "react-icons/fc";
 import { HiArrowNarrowRight } from "react-icons/hi";
+import { useNavigate } from 'react-router-dom';
+import StatisticsSidebar from './StatisticsSidebar';
+import { images } from '../assets/assets';
+import { authService } from '../services/authService';
 
 const LoginForm = () => {
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -21,17 +27,41 @@ const LoginForm = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Xử lý logic đăng nhập tại đây
-        console.log('Login data submitted:', formData);
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            await authService.login({
+                email: formData.email,
+                password: formData.password
+            });
+
+            // Save remember me preference if checked
+            if (formData.rememberMe) {
+                localStorage.setItem('rememberMe', 'true');
+            } else {
+                localStorage.removeItem('rememberMe');
+            }
+
+            navigate('/');
+        } catch (error) {
+            console.error('Login failed:', error);
+            setError(
+                error.response?.data?.message ||
+                'Đăng nhập không thành công. Vui lòng kiểm tra email và mật khẩu.'
+            );
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
 
-    // Testimonial dành riêng cho trang đăng nhập
+    // Testimonial for login page
     const loginTestimonial = {
         quote: "Markendation giúp tôi lên kế hoạch bữa ăn và mua sắm thực phẩm hiệu quả. Tôi tiết kiệm được cả thời gian và tiền bạc khi sử dụng ứng dụng này.",
         author: "Trần Huyền",
@@ -39,17 +69,28 @@ const LoginForm = () => {
         initials: "TH"
     };
 
+    // Handle Google login (placeholder for OAuth implementation)
+    const handleGoogleLogin = () => {
+        // Implementation for Google OAuth would go here
+        console.log('Google login clicked');
+    };
+
     return (
         <div className="min-h-screen flex flex-col md:flex-row border border-gray-200 shadow-lg rounded-xl overflow-hidden">
             {/* Left side - Form */}
             <div className="w-full md:w-1/2 p-8 flex flex-col justify-center items-center bg-white border-r border-gray-200">
-
                 <div className="max-w-md w-full">
                     <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm mb-6">
                         <h1 className="text-3xl font-bold mb-2 text-gray-800">Đăng nhập</h1>
                         <p className="text-gray-600 mb-6">
                             Chưa có tài khoản? <a href="/register" className="text-orange-500 hover:underline font-medium">Tạo tài khoản</a>
                         </p>
+
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg border border-red-200">
+                                {error}
+                            </div>
+                        )}
 
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
@@ -107,10 +148,15 @@ const LoginForm = () => {
 
                             <button
                                 type="submit"
-                                className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center"
+                                disabled={isLoading}
+                                className={`w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                                Đăng nhập
-                                <HiArrowNarrowRight className="h-5 w-5 ml-2" />
+                                {isLoading ? 'Đang đăng nhập...' : (
+                                    <>
+                                        Đăng nhập
+                                        <HiArrowNarrowRight className="h-5 w-5 ml-2" />
+                                    </>
+                                )}
                             </button>
                         </form>
 
@@ -119,7 +165,10 @@ const LoginForm = () => {
                                 <div className="border-t border-gray-300 absolute w-full"></div>
                                 <div className="bg-white px-4 relative text-gray-500 text-sm">Hoặc</div>
                             </div>
-                            <button className="w-full border border-gray-300 bg-white text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-50 transition duration-300 flex items-center justify-center">
+                            <button
+                                className="w-full border border-gray-300 bg-white text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-50 transition duration-300 flex items-center justify-center"
+                                onClick={handleGoogleLogin}
+                            >
                                 <FcGoogle className="h-5 w-5 mr-2" />
                                 Đăng nhập với Google
                             </button>

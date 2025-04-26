@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FiMapPin, FiNavigation, FiX } from "react-icons/fi";
+import { userService } from '../services/userService';
 
 const LocationSelector = ({ onLocationChange, initialLocation }) => {
     const [showLocationModal, setShowLocationModal] = useState(false);
@@ -9,27 +10,26 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
         longitude: -0.1367
     });
     const [isGettingLocation, setIsGettingLocation] = useState(false);
+    const [isSavingLocation, setIsSavingLocation] = useState(false);
     const [error, setError] = useState('');
     const [map, setMap] = useState(null);
     const [autocomplete, setAutocomplete] = useState(null);
     const mapRef = useRef(null);
     const inputRef = useRef(null);
 
-    // Initialize Google Maps and Places Autocomplete after the modal opens
     useEffect(() => {
         if (showLocationModal && window.google && !map) {
             initMap();
         }
     }, [showLocationModal]);
+
     // Load Google Maps API
-    // Sửa đổi useEffect tải Google Maps API
     useEffect(() => {
-        // Kiểm tra xem script đã tồn tại chưa để tránh tải lại
         const existingScript = document.getElementById('google-maps-script');
         if (!window.google && !existingScript) {
             const googleMapScript = document.createElement('script');
-            googleMapScript.id = 'google-maps-script'; // Thêm ID để dễ tham chiếu
-            googleMapScript.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBW_Zu65x0Fx-SmuPHiMHwaQ2lTu6qfeCA&libraries=places`;
+            googleMapScript.id = 'google-maps-script';
+            googleMapScript.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_API_KEY}&libraries=places`;
             googleMapScript.async = true;
             googleMapScript.defer = true;
             googleMapScript.onload = () => {
@@ -39,11 +39,9 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
             };
             document.body.appendChild(googleMapScript);
         } else if (window.google && showLocationModal && !map) {
-            // Nếu API đã được tải và modal đang mở nhưng map chưa khởi tạo
             initMap();
         }
 
-        // Không cần xóa script khi component unmount vì có thể cần tái sử dụng
         return () => { };
     }, [showLocationModal]);
 
@@ -77,7 +75,6 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
             animation: window.google.maps.Animation.DROP
         });
 
-        // Update location when marker is dragged
         window.google.maps.event.addListener(marker, 'dragend', () => {
             const position = marker.getPosition();
             const newLocation = {
@@ -86,7 +83,6 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
                 address: 'Loading address...'
             };
 
-            // Get address from coordinates (reverse geocoding)
             const geocoder = new window.google.maps.Geocoder();
             geocoder.geocode({ location: position }, (results, status) => {
                 if (status === 'OK' && results[0]) {
@@ -143,26 +139,21 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
             (position) => {
                 const { latitude, longitude } = position.coords;
 
-                // Create a location object
                 const location = {
                     latitude,
                     longitude,
                     address: 'Loading address...'
                 };
 
-                // If map is initialized, update marker and center
                 if (map && window.google) {
                     const latLng = new window.google.maps.LatLng(latitude, longitude);
 
-                    // Update map center
                     map.setCenter(latLng);
 
-                    // Find and update marker
                     map.markers?.forEach(marker => {
                         marker.setPosition(latLng);
                     });
 
-                    // Get address from coordinates using reverse geocoding
                     const geocoder = new window.google.maps.Geocoder();
                     geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
                         if (status === 'OK' && results[0]) {
@@ -189,10 +180,28 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
         );
     };
 
-    // Confirm selection and close modal
-    const confirmSelection = () => {
-        onLocationChange(currentLocation);
-        setShowLocationModal(false);
+    const confirmSelection = async () => {
+        try {
+            setIsSavingLocation(true);
+            setError('');
+
+            const locationData = {
+                address: currentLocation.address,
+                longitude: currentLocation.longitude,
+                latitude: currentLocation.latitude
+            };
+
+            const result = await userService.updateUserLocation(locationData);
+
+            onLocationChange(result.location || currentLocation);
+
+            setShowLocationModal(false);
+        } catch (error) {
+            console.error('Failed to update location:', error);
+            setError(error.response?.data?.message || 'Không thể cập nhật vị trí. Vui lòng thử lại sau.');
+        } finally {
+            setIsSavingLocation(false);
+        }
     };
 
     return (
@@ -284,9 +293,20 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
                         {/* Confirm Button */}
                         <button
                             onClick={confirmSelection}
-                            className="w-full bg-green-600 text-white font-medium p-3 rounded hover:bg-green-700 transition-colors"
+                            disabled={isSavingLocation}
+                            className={`w-full bg-green-600 text-white font-medium p-3 rounded hover:bg-green-700 transition-colors ${isSavingLocation ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            Xác nhận vị trí này
+                            {isSavingLocation ? (
+                                <span className="flex items-center justify-center">
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Đang lưu vị trí...
+                                </span>
+                            ) : (
+                                'Xác nhận vị trí này'
+                            )}
                         </button>
                     </div>
                 </div>

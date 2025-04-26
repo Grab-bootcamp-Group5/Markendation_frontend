@@ -7,6 +7,8 @@ import { HiOutlineCalculator } from "react-icons/hi";
 import BasketHeader from '../components/basket/BasketHeader';
 import IngredientSection from '../components/basket/IngredientSection';
 import DishSection from '../components/basket/DishSection';
+import { basketService } from '../services/basketService';
+import { toast } from 'react-toastify';
 
 const BasketPage = () => {
     const [basketItems, setBasketItems] = useState({
@@ -21,41 +23,100 @@ const BasketPage = () => {
     });
 
     useEffect(() => {
-        const storedBasket = localStorage.getItem('basketItems');
-        if (storedBasket) {
-            const parsedBasket = JSON.parse(storedBasket);
+        const fetchBasket = async () => {
+            setLoading(true);
+            try {
+                // Check if user is logged in
+                if (localStorage.getItem('accessToken')) {
+                    // Fetch basket from API
+                    const basketData = await basketService.getBasket();
+                    if (basketData) {
+                        // Process the data to ensure all quantities are numbers
+                        if (basketData.ingredients) {
+                            basketData.ingredients = basketData.ingredients.map(item => ({
+                                ...item,
+                                quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
+                            }));
+                        }
 
-            if (parsedBasket.ingredients) {
-                parsedBasket.ingredients = parsedBasket.ingredients.map(item => ({
-                    ...item,
-                    quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
-                }));
-            }
+                        if (basketData.dishes) {
+                            Object.keys(basketData.dishes).forEach(dishId => {
+                                if (basketData.dishes[dishId].ingredients) {
+                                    basketData.dishes[dishId].ingredients = basketData.dishes[dishId].ingredients.map(item => ({
+                                        ...item,
+                                        quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
+                                    }));
+                                }
+                            });
+                        }
 
-            if (parsedBasket.dishes) {
-                Object.keys(parsedBasket.dishes).forEach(dishId => {
-                    if (parsedBasket.dishes[dishId].ingredients) {
-                        parsedBasket.dishes[dishId].ingredients = parsedBasket.dishes[dishId].ingredients.map(item => ({
-                            ...item,
-                            quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
+                        setBasketItems(basketData);
+
+                        // Set initial expanded state for dishes
+                        const initialExpandedState = {};
+                        Object.keys(basketData.dishes || {}).forEach(dishId => {
+                            initialExpandedState[dishId] = true;
+                        });
+
+                        setExpandedSections(prev => ({
+                            ...prev,
+                            dishes: initialExpandedState
                         }));
                     }
-                });
+                } else {
+                    // Not logged in, load from localStorage
+                    const storedBasket = localStorage.getItem('basketItems');
+                    if (storedBasket) {
+                        const parsedBasket = JSON.parse(storedBasket);
+
+                        // Process the data to ensure all quantities are numbers
+                        if (parsedBasket.ingredients) {
+                            parsedBasket.ingredients = parsedBasket.ingredients.map(item => ({
+                                ...item,
+                                quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
+                            }));
+                        }
+
+                        if (parsedBasket.dishes) {
+                            Object.keys(parsedBasket.dishes).forEach(dishId => {
+                                if (parsedBasket.dishes[dishId].ingredients) {
+                                    parsedBasket.dishes[dishId].ingredients = parsedBasket.dishes[dishId].ingredients.map(item => ({
+                                        ...item,
+                                        quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
+                                    }));
+                                }
+                            });
+                        }
+
+                        setBasketItems(parsedBasket);
+
+                        // Set initial expanded state for dishes
+                        const initialExpandedState = {};
+                        Object.keys(parsedBasket.dishes || {}).forEach(dishId => {
+                            initialExpandedState[dishId] = true;
+                        });
+
+                        setExpandedSections(prev => ({
+                            ...prev,
+                            dishes: initialExpandedState
+                        }));
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching basket:", error);
+                toast.error("Không thể tải giỏ hàng. Vui lòng thử lại sau.");
+
+                // Fall back to localStorage if API fails
+                const storedBasket = localStorage.getItem('basketItems');
+                if (storedBasket) {
+                    setBasketItems(JSON.parse(storedBasket));
+                }
+            } finally {
+                setLoading(false);
             }
+        };
 
-            setBasketItems(parsedBasket);
-
-            const initialExpandedState = {};
-            Object.keys(parsedBasket.dishes || {}).forEach(dishId => {
-                initialExpandedState[dishId] = true;
-            });
-
-            setExpandedSections(prev => ({
-                ...prev,
-                dishes: initialExpandedState
-            }));
-        }
-        setLoading(false);
+        fetchBasket();
     }, []);
 
     useEffect(() => {
@@ -86,9 +147,10 @@ const BasketPage = () => {
         }
     };
 
-    const updateQuantity = (id, newQuantity, isDishIngredient = false, dishId = null) => {
+    const updateQuantity = async (id, newQuantity, isDishIngredient = false, dishId = null) => {
         newQuantity = parseFloat(parseFloat(newQuantity).toFixed(1));
 
+        // Update local state first for a responsive UI
         if (isDishIngredient && dishId) {
             setBasketItems(prevState => {
                 const updatedDishes = { ...prevState.dishes };
@@ -125,10 +187,14 @@ const BasketPage = () => {
                     ingredients: updatedIngredients
                 };
             });
+
+            // Update in API if user is logged in
+            // Note: Add API call here when update endpoint is available
         }
     };
 
-    const removeItem = (id, isDishIngredient = false, dishId = null) => {
+    const removeItem = async (id, isDishIngredient = false, dishId = null) => {
+        // Update local state first for a responsive UI
         if (isDishIngredient && dishId) {
             setBasketItems(prevState => {
                 const updatedDishes = { ...prevState.dishes };
@@ -180,11 +246,17 @@ const BasketPage = () => {
                     dishes: updatedDishes
                 };
             });
+
+            // Delete dish from API if user is logged in
+            // Note: Add API call here when delete dish endpoint is available
         } else {
             setBasketItems(prevState => ({
                 ...prevState,
                 ingredients: prevState.ingredients.filter(item => item.id !== id)
             }));
+
+            // Delete ingredient from API if user is logged in
+            // Note: Add API call here when delete ingredient endpoint is available
         }
     };
 
@@ -199,15 +271,13 @@ const BasketPage = () => {
         return ingredientCount + dishIngredientsCount;
     };
 
-    const saveCart = () => {
-        alert("Đã lưu giỏ hàng!");
+    const saveCart = async () => {
+        // API call to save cart not provided in the documentation
+        // This would be implemented when the endpoint is available
+        toast.success("Đã lưu giỏ hàng!");
     };
 
-    const startCheckout = () => {
-        alert("Bắt đầu tính toán thanh toán!");
-    };
-
-    const updateDishServings = (dishId, newServings) => {
+    const updateDishServings = async (dishId, newServings) => {
         if (newServings <= 0) {
             removeItem(null, false, dishId);
         } else {
@@ -221,6 +291,9 @@ const BasketPage = () => {
                     }
                 }
             }));
+
+            // Update in API if user is logged in
+            // Note: Add API call here when update dish endpoint is available
         }
     };
 
@@ -271,7 +344,7 @@ const BasketPage = () => {
                         {/* Checkout Button */}
                         <div className="py-4 flex justify-center border-t border-gray-200 mt-4">
                             <Link to='/calculate'>
-                                <button className="bg-green-600 text-white px-6 py-2 flex items-center justify-center rounded-md"                            >
+                                <button className="bg-green-600 text-white px-6 py-2 flex items-center justify-center rounded-md">
                                     <HiOutlineCalculator className="w-5 h-5 mr-2" />
                                     Bắt đầu tính toán
                                 </button>

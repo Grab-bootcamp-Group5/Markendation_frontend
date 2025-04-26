@@ -1,4 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { userService } from '../services/userService';
+import { basketService } from '../services/basketService';
 
 const BasketContext = createContext();
 
@@ -10,15 +12,51 @@ export const BasketProvider = ({ children }) => {
         dishes: {}
     });
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
+    // Fetch user's basket on initial load if logged in
     useEffect(() => {
-        const storedBasket = localStorage.getItem('basketItems');
-        if (storedBasket) {
-            setBasketItems(JSON.parse(storedBasket));
-        }
-        setLoading(false);
+        const fetchUserBasket = async () => {
+            try {
+                // Check if user is logged in
+                if (localStorage.getItem('accessToken')) {
+                    // Fetch basket from API
+                    const basketData = await basketService.getBasket();
+
+                    if (basketData) {
+                        setBasketItems(basketData);
+                    } else {
+                        // If no basket in API, try to load from localStorage
+                        const storedBasket = localStorage.getItem('basketItems');
+                        if (storedBasket) {
+                            setBasketItems(JSON.parse(storedBasket));
+                        }
+                    }
+                } else {
+                    // Not logged in, load from localStorage
+                    const storedBasket = localStorage.getItem('basketItems');
+                    if (storedBasket) {
+                        setBasketItems(JSON.parse(storedBasket));
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading basket:", error);
+                setError("Could not load your basket. Using local storage instead.");
+
+                // Fallback to localStorage
+                const storedBasket = localStorage.getItem('basketItems');
+                if (storedBasket) {
+                    setBasketItems(JSON.parse(storedBasket));
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserBasket();
     }, []);
 
+    // Save basket to localStorage when it changes
     useEffect(() => {
         if (!loading) {
             localStorage.setItem('basketItems', JSON.stringify(basketItems));
@@ -27,32 +65,48 @@ export const BasketProvider = ({ children }) => {
         }
     }, [basketItems, loading]);
 
-    const addIngredient = (ingredient) => {
-        setBasketItems(prevState => {
-            const existingItemIndex = prevState.ingredients.findIndex(item => item.id === ingredient.id);
+    const addIngredient = async (ingredient) => {
+        try {
+            // Update local state first for a responsive UI
+            setBasketItems(prevState => {
+                const existingItemIndex = prevState.ingredients.findIndex(item => item.id === ingredient.id);
 
-            if (existingItemIndex !== -1) {
-                const updatedIngredients = [...prevState.ingredients];
-                updatedIngredients[existingItemIndex] = {
-                    ...updatedIngredients[existingItemIndex],
-                    quantity: updatedIngredients[existingItemIndex].quantity + 1
-                };
+                if (existingItemIndex !== -1) {
+                    const updatedIngredients = [...prevState.ingredients];
+                    updatedIngredients[existingItemIndex] = {
+                        ...updatedIngredients[existingItemIndex],
+                        quantity: updatedIngredients[existingItemIndex].quantity + 1
+                    };
 
-                return {
-                    ...prevState,
-                    ingredients: updatedIngredients
-                };
-            } else {
-                return {
-                    ...prevState,
-                    ingredients: [...prevState.ingredients, {
-                        ...ingredient,
-                        quantity: 1,
-                        unit: ingredient.unit
-                    }]
-                };
+                    return {
+                        ...prevState,
+                        ingredients: updatedIngredients
+                    };
+                } else {
+                    return {
+                        ...prevState,
+                        ingredients: [...prevState.ingredients, {
+                            ...ingredient,
+                            quantity: 1,
+                            unit: ingredient.unit || 'piece'
+                        }]
+                    };
+                }
+            });
+
+            // If user is logged in, send to API
+            if (localStorage.getItem('accessToken')) {
+                await basketService.addIngredient({
+                    id: ingredient.id,
+                    vietnameseName: ingredient.vietnameseName || ingredient.name,
+                    unit: ingredient.unit || 'piece',
+                    quantity: 1
+                });
             }
-        });
+        } catch (error) {
+            console.error("Error adding ingredient to basket:", error);
+            // Keep the UI state updated regardless of API error
+        }
     };
 
     const addDish = (dish) => {
@@ -69,6 +123,8 @@ export const BasketProvider = ({ children }) => {
                 }
             };
         });
+
+        // Note: Add API call here when dish endpoint is available
     };
 
     const updateIngredientQuantity = (id, amount) => {
@@ -89,6 +145,8 @@ export const BasketProvider = ({ children }) => {
                 ingredients: updatedIngredients
             };
         });
+
+        // Note: Add API call here when update endpoint is available
     };
 
     const removeIngredient = (id) => {
@@ -96,6 +154,8 @@ export const BasketProvider = ({ children }) => {
             ...prevState,
             ingredients: prevState.ingredients.filter(item => item.id !== id)
         }));
+
+        // Note: Add API call here when delete endpoint is available
     };
 
     const updateDishIngredientQuantity = (dishId, ingredientId, amount) => {
@@ -125,6 +185,8 @@ export const BasketProvider = ({ children }) => {
                 dishes: updatedDishes
             };
         });
+
+        // Note: Add API call here when update endpoint is available
     };
 
     const removeDish = (dishId) => {
@@ -137,6 +199,8 @@ export const BasketProvider = ({ children }) => {
                 dishes: updatedDishes
             };
         });
+
+        // Note: Add API call here when delete endpoint is available
     };
 
     const getTotalItemCount = () => {
@@ -155,11 +219,14 @@ export const BasketProvider = ({ children }) => {
             ingredients: [],
             dishes: {}
         });
+
+        // Note: Add API call here when clear endpoint is available
     };
 
     const value = {
         basketItems,
         loading,
+        error,
         addIngredient,
         addDish,
         updateIngredientQuantity,
@@ -177,4 +244,4 @@ export const BasketProvider = ({ children }) => {
     );
 };
 
-export default BasketContext; 
+export default BasketContext;
