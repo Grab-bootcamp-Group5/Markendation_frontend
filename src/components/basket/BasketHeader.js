@@ -14,7 +14,7 @@ const BasketHeader = ({ saveCart }) => {
                 className="bg-orange-500 text-white px-4 py-2 rounded flex items-center text-sm"
             >
                 <FiBookmark className="w-5 h-5 mr-1" />
-                Lưu giỏ hàng
+                Lưu giỏ hàng yêu thích
             </button>
         </div>
     );

@@ -18,28 +18,23 @@ export const BasketProvider = ({ children }) => {
             try {
                 const parsedBasket = JSON.parse(storedBasket);
 
-                // Đảm bảo cấu trúc dữ liệu đúng
                 const processedBasket = {
                     ingredients: (parsedBasket.ingredients || []).map(item => ({
                         ...item,
-                        // Đảm bảo quantity là số nguyên và tối thiểu là 1
-                        quantity: parseInt(item.quantity, 10) || 1
+                        quantity: parseFloat(item.quantity) || 0.1
                     })),
                     dishes: { ...(parsedBasket.dishes || {}) }
                 };
 
-                // Xử lý số lượng trong dishes
                 Object.keys(processedBasket.dishes).forEach(dishId => {
                     const dish = processedBasket.dishes[dishId];
 
-                    // Đảm bảo servings là số nguyên
                     dish.servings = parseInt(dish.servings, 10) || 1;
 
-                    // Đảm bảo quantity trong ingredients là số nguyên
                     if (dish.ingredients) {
                         dish.ingredients = dish.ingredients.map(ingredient => ({
                             ...ingredient,
-                            quantity: parseInt(ingredient.quantity, 10) || 1
+                            quantity: parseFloat(ingredient.quantity) || 0.1
                         }));
                     }
                 });
@@ -55,25 +50,21 @@ export const BasketProvider = ({ children }) => {
         }
     }, []);
 
-    // Lưu giỏ hàng vào localStorage khi có thay đổi
     useEffect(() => {
         if (basketItems.ingredients.length > 0 || Object.keys(basketItems.dishes).length > 0) {
             localStorage.setItem('basketItems', JSON.stringify(basketItems));
         }
     }, [basketItems]);
 
-    // Thêm nguyên liệu vào giỏ hàng
     const addIngredient = async (ingredientData) => {
         try {
             setLoading(true);
 
-            // Đảm bảo quantity là số nguyên và tối thiểu là 1
             const processedIngredientData = {
                 ...ingredientData,
-                quantity: Math.max(1, parseInt(ingredientData.quantity, 10) || 1)
+                quantity: parseFloat(ingredientData.quantity) || 0.1
             };
 
-            // Kiểm tra xem nguyên liệu đã tồn tại trong giỏ hàng chưa
             const existingIndex = basketItems.ingredients.findIndex(
                 item => item.id === processedIngredientData.id
             );
@@ -81,9 +72,8 @@ export const BasketProvider = ({ children }) => {
             let updatedBasketItems;
 
             if (existingIndex >= 0) {
-                // Nếu đã tồn tại, cập nhật số lượng
                 const updatedIngredients = [...basketItems.ingredients];
-                const existingQuantity = parseInt(updatedIngredients[existingIndex].quantity, 10) || 0;
+                const existingQuantity = parseFloat(updatedIngredients[existingIndex].quantity) || 0;
                 updatedIngredients[existingIndex] = {
                     ...processedIngredientData,
                     quantity: existingQuantity + processedIngredientData.quantity
@@ -94,55 +84,40 @@ export const BasketProvider = ({ children }) => {
                     ingredients: updatedIngredients
                 };
             } else {
-                // Nếu chưa tồn tại, thêm mới
                 updatedBasketItems = {
                     ...basketItems,
                     ingredients: [...basketItems.ingredients, processedIngredientData]
                 };
             }
 
-            // Cập nhật state giỏ hàng
             setBasketItems(updatedBasketItems);
-
-            // Đồng bộ với server
-            try {
-                await basketService.updateBasket(updatedBasketItems);
-                setLoading(false);
-                return processedIngredientData; // Trả về dữ liệu nếu thành công
-            } catch (error) {
-                console.error("Error syncing with server:", error);
-                setLoading(false);
-                return {}; // Trả về object rỗng nếu có lỗi
-            }
+            setLoading(false);
+            return processedIngredientData;
         } catch (error) {
             console.error("Error adding ingredient to basket:", error);
             setLoading(false);
-            return {}; // Trả về object rỗng nếu có lỗi
+            return {};
         }
     };
 
-    // Thêm món ăn vào giỏ hàng
     const addDish = async (dishData) => {
         try {
             setLoading(true);
 
-            // Đảm bảo servings là số nguyên và tối thiểu là 1
             const processedDishData = {
                 ...dishData,
                 servings: Math.max(1, parseInt(dishData.servings, 10) || 1),
                 ingredients: dishData.ingredients ? dishData.ingredients.map(ingredient => ({
                     ...ingredient,
-                    quantity: Math.max(1, parseInt(ingredient.quantity, 10) || 1)
+                    quantity: parseFloat(ingredient.quantity) || 0.1
                 })) : []
             };
 
-            // Kiểm tra xem món ăn đã tồn tại trong giỏ hàng chưa
             const dishExists = basketItems.dishes[processedDishData.id];
 
             let updatedBasketItems;
 
             if (dishExists) {
-                // Nếu đã tồn tại, cập nhật số lượng phần ăn
                 updatedBasketItems = {
                     ...basketItems,
                     dishes: {
@@ -154,7 +129,6 @@ export const BasketProvider = ({ children }) => {
                     }
                 };
             } else {
-                // Nếu chưa tồn tại, thêm mới
                 updatedBasketItems = {
                     ...basketItems,
                     dishes: {
@@ -164,26 +138,16 @@ export const BasketProvider = ({ children }) => {
                 };
             }
 
-            // Cập nhật state giỏ hàng
             setBasketItems(updatedBasketItems);
-
-            // Đồng bộ với server
-            try {
-                await basketService.updateBasket(updatedBasketItems);
-                setLoading(false);
-                return processedDishData; // Trả về dữ liệu nếu thành công
-            } catch (error) {
-                console.error("Error syncing with server:", error);
-                setLoading(false);
-                return {}; // Trả về object rỗng nếu có lỗi
-            }
+            setLoading(false);
+            return processedDishData;
         } catch (error) {
             console.error("Error adding dish to basket:", error);
             setLoading(false);
-            return {}; // Trả về object rỗng nếu có lỗi
+            return {};
         }
     };
-    // Xóa nguyên liệu khỏi giỏ hàng
+
     const removeIngredient = async (ingredientId) => {
         try {
             setLoading(true);
@@ -194,9 +158,6 @@ export const BasketProvider = ({ children }) => {
             };
 
             setBasketItems(updatedBasketItems);
-
-            // Đồng bộ với server
-            await basketService.updateBasket(updatedBasketItems);
             setLoading(false);
             return true;
         } catch (error) {
@@ -206,7 +167,6 @@ export const BasketProvider = ({ children }) => {
         }
     };
 
-    // Xóa món ăn khỏi giỏ hàng
     const removeDish = async (dishId) => {
         try {
             setLoading(true);
@@ -220,9 +180,6 @@ export const BasketProvider = ({ children }) => {
             };
 
             setBasketItems(updatedBasketItems);
-
-            // Đồng bộ với server
-            await basketService.updateBasket(updatedBasketItems);
             setLoading(false);
             return true;
         } catch (error) {
@@ -232,13 +189,23 @@ export const BasketProvider = ({ children }) => {
         }
     };
 
-    // Cập nhật giỏ hàng
-    const updateBasket = async () => {
+    // Cập nhật giỏ hàng và gọi API nếu cần
+    const updateBasket = async (newBasketItems = null) => {
         try {
             setLoading(true);
-            await basketService.updateBasket(basketItems);
+
+            // Nếu có newBasketItems được cung cấp, cập nhật state
+            if (newBasketItems) {
+                setBasketItems(newBasketItems);
+                localStorage.setItem('basketItems', JSON.stringify(newBasketItems));
+                setLoading(false);
+                return true;
+            }
+
+            // Gọi API với basketItems hiện tại - basketService sẽ xử lý chuyển đổi định dạng
+            const result = await basketService.updateBasket(basketItems);
             setLoading(false);
-            return true;
+            return result;
         } catch (error) {
             console.error("Error updating basket:", error);
             setLoading(false);
@@ -260,9 +227,6 @@ export const BasketProvider = ({ children }) => {
 
             // Xóa khỏi localStorage
             localStorage.removeItem('basketItems');
-
-            // Đồng bộ với server
-            await basketService.updateBasket(emptyBasket);
 
             setLoading(false);
             return true;

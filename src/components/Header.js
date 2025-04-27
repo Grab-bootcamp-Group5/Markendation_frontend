@@ -3,10 +3,14 @@ import { MdOutlineFileDownload } from "react-icons/md";
 import { Link } from 'react-router-dom';
 import cartIcon from '../assets/images/cart.png';
 import LocationSelector from './LocationSelector';
+import { useBasket } from '../context/BasketContext';
+import { toast } from 'react-toastify';
 
 const Header = ({ basketCount }) => {
     const [itemCount, setItemCount] = useState(0);
     const [userLocation, setUserLocation] = useState(null);
+    // Sử dụng BasketContext để cập nhật giỏ hàng
+    const { updateBasket, basketItems } = useBasket();
 
     useEffect(() => {
         // Load initial basket count
@@ -86,7 +90,21 @@ const Header = ({ basketCount }) => {
     const handleLocationChange = (location) => {
         if (!location) return;
         setUserLocation(location);
+    };
 
+    // Hàm xử lý cập nhật giỏ hàng lên server
+    const handleUpdateBasket = async () => {
+        try {
+            const result = await updateBasket();
+            if (result) {
+                toast.success("Đã cập nhật giỏ hàng thành công!");
+            } else {
+                toast.error("Không thể cập nhật giỏ hàng. Vui lòng thử lại sau.");
+            }
+        } catch (error) {
+            console.error("Error updating basket:", error);
+            toast.error("Không thể cập nhật giỏ hàng. Vui lòng thử lại sau.");
+        }
     };
 
     if (!userLocation) {
@@ -109,7 +127,11 @@ const Header = ({ basketCount }) => {
                     <span>sản phẩm</span>
                 </Link>
 
-                <button className="border border-gray-200 p-2 rounded hover:bg-gray-50 transition-colors">
+                <button
+                    onClick={handleUpdateBasket}
+                    className="border border-gray-200 p-2 rounded hover:bg-gray-50 transition-colors"
+                    title="Cập nhật giỏ hàng"
+                >
                     <MdOutlineFileDownload className="h-5 w-5 text-gray-600" />
                 </button>
             </div>
