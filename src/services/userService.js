@@ -19,6 +19,34 @@ export const userService = {
         } catch (error) {
             throw error;
         }
+    },
+
+    // Save user data to localStorage
+    saveUserToLocalStorage: (userData) => {
+        if (userData) {
+            const userToSave = {
+                ...userData,
+                password: undefined
+            };
+
+            localStorage.setItem('user', JSON.stringify(userToSave));
+            return true;
+        }
+        return false;
+    },
+
+    // Helper function to get user from localStorage
+    getUserFromLocalStorage: () => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            return JSON.parse(userStr);
+        }
+        return null;
+    },
+
+    // Clear user data from localStorage
+    clearUserFromLocalStorage: () => {
+        localStorage.removeItem('user');
     }
 };
 

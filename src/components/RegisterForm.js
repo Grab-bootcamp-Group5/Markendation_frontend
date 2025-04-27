@@ -63,13 +63,12 @@ const RegisterForm = () => {
 
         try {
             await authService.register({
-                username: formData.username, // Will be mapped to fullname in the service
+                username: formData.username,
                 email: formData.email,
                 password: formData.password
             });
 
-            // Redirect to home page after successful registration
-            navigate('/');
+            navigate('/homepage');
         } catch (error) {
             console.error('Registration failed:', error);
             setError(

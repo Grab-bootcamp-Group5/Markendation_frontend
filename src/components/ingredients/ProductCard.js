@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useModal } from '../context/ModalContext';
-import { useBasket } from '../context/BasketContext';
-import { ingredientService } from '../services/ingredientService';
+import { useModal } from '../../context/ModalContext';
+import { useBasket } from '../../context/BasketContext';
+import { ingredientService } from '../../services/ingredientService';
 
 const ProductCard = ({ image, name, restaurantCount, id, category, unit }) => {
     const { openModal } = useModal();
@@ -19,11 +19,10 @@ const ProductCard = ({ image, name, restaurantCount, id, category, unit }) => {
             const completeIngredient = {
                 id: ingredientDetails.id,
                 name: ingredientDetails.name,
-                vietnameseName: ingredientDetails.vietnameseName,
                 unit: ingredientDetails.unit,
                 // Keep the props that might not be in the API
-                image: image || '/images/default-ingredient.jpg',
-                category: category || 'Khác',
+                image: ingredientDetails.imageURL || image || '/images/default-ingredient.jpg',
+                category: ingredientDetails.category || category || 'Khác',
                 restaurantCount: restaurantCount || 5
             };
 

@@ -8,8 +8,14 @@ export const authService = {
         try {
             const response = await axios.post(`${API_URL}/auth/login`, credentials);
 
-            if (response.data.token) {
-                localStorage.setItem('accessToken', response.data.token);
+            if (response.data.accessToken) {
+                localStorage.setItem('accessToken', response.data.accessToken);
+
+                // Lưu refreshToken nếu có
+                if (response.data.refreshToken) {
+                    localStorage.setItem('refreshToken', response.data.refreshToken);
+                }
+
                 const userData = await userService.getUserInfo();
                 userService.saveUserToLocalStorage(userData);
             }
@@ -23,10 +29,23 @@ export const authService = {
 
     register: async (userData) => {
         try {
-            const response = await axios.post(`${API_URL}/auth/register`, userData);
+            // Đảm bảo đúng cấu trúc dữ liệu gửi đi
+            const registerData = {
+                fullname: userData.username,
+                email: userData.email,
+                password: userData.password
+            };
 
-            if (response.data.token) {
-                localStorage.setItem('accessToken', response.data.token);
+            const response = await axios.post(`${API_URL}/auth/register`, registerData);
+
+            if (response.data.accessToken) {
+                localStorage.setItem('accessToken', response.data.accessToken);
+
+                // Lưu refreshToken nếu có
+                if (response.data.refreshToken) {
+                    localStorage.setItem('refreshToken', response.data.refreshToken);
+                }
+
                 const userInfo = await userService.getUserInfo();
                 userService.saveUserToLocalStorage(userInfo);
             }
@@ -40,6 +59,7 @@ export const authService = {
 
     logout: () => {
         localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         // Không xóa giỏ hàng để giữ lại các mặt hàng cho người dùng không đăng nhập
     },
@@ -47,11 +67,16 @@ export const authService = {
     refreshToken: async () => {
         try {
             const response = await axios.post(`${API_URL}/auth/refresh`, {
-                token: localStorage.getItem('refreshToken')
+                refreshToken: localStorage.getItem('refreshToken')
             });
 
-            if (response.data.token) {
-                localStorage.setItem('accessToken', response.data.token);
+            if (response.data.accessToken) {
+                localStorage.setItem('accessToken', response.data.accessToken);
+
+                // Cập nhật refreshToken mới nếu có
+                if (response.data.refreshToken) {
+                    localStorage.setItem('refreshToken', response.data.refreshToken);
+                }
             }
 
             return response.data;

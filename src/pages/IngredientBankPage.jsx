@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import SearchBar from '../components/SearchBar';
-import ProductCard from '../components/ProductCard';
+import ProductCard from '../components/ingredients/ProductCard';
 import Footer from '../components/Footer';
-import IngredientCategories from '../components/IngredientCategories';
-import FeaturedSection from '../components/FeaturedSection';
+import IngredientCategories from '../components/ingredients/IngredientCategories';
+import FeaturedSection from '../components/ingredients/FeaturedSection';
 import { ingredientService } from '../services/ingredientService';
 
 const IngredientBankPage = () => {
@@ -28,15 +28,14 @@ const IngredientBankPage = () => {
                 const data = await ingredientService.getIngredients(currentPage, pageSize);
 
                 // Map the response to match the format needed by the components
+                // Based on the provided API specification
                 const mappedData = data.map(ingredient => ({
                     id: ingredient.id,
                     name: ingredient.name,
-                    vietnameseName: ingredient.vietnameseName,
                     unit: ingredient.unit,
-                    // Set default values for fields not provided by the API
-                    image: ingredient.image || '/images/default-ingredient.jpg',
-                    category: ingredient.category || 'Khác', // Default category
-                    restaurantCount: ingredient.restaurantCount || 5 // Default count
+                    image: ingredient.imageURL || '/images/default-ingredient.jpg',
+                    category: ingredient.category || 'Khác', // Default category if not provided
+                    restaurantCount: 5 // Default count since not provided by API
                 }));
 
                 setIngredients(prevIngredients =>
@@ -56,9 +55,8 @@ const IngredientBankPage = () => {
                     });
                 }
 
-                // Assuming the API returns total pages information
-                // If not, you might need to calculate this based on data length
-                setTotalPages(Math.ceil(data.length / pageSize) || 1);
+                // Assuming we have at least one page, we'll set more pages if we get data
+                setTotalPages(data.length > 0 ? Math.max(totalPages, currentPage + 1) : currentPage);
 
             } catch (error) {
                 console.error("Error loading ingredients:", error);
@@ -93,9 +91,7 @@ const IngredientBankPage = () => {
         }
 
         const filtered = ingredients.filter(item => {
-            const matchesSearch =
-                (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (item.vietnameseName && item.vietnameseName.toLowerCase().includes(searchTerm.toLowerCase()));
+            const matchesSearch = item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = activeCategory === "Tất cả" || item.category === activeCategory;
             return matchesSearch && matchesCategory;
         });
@@ -149,7 +145,7 @@ const IngredientBankPage = () => {
                                         key={ingredient.id}
                                         id={ingredient.id}
                                         image={ingredient.image}
-                                        name={ingredient.vietnameseName || ingredient.name}
+                                        name={ingredient.name}
                                         category={ingredient.category}
                                         restaurantCount={ingredient.restaurantCount}
                                         unit={ingredient.unit}

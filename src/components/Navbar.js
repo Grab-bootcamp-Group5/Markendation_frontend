@@ -1,8 +1,29 @@
-import React from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import logoImage from '../assets/images/logo.png';
 
 const Navbar = () => {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        // Kiểm tra trạng thái đăng nhập mỗi khi component được render
+        const token = localStorage.getItem('accessToken');
+        setIsLoggedIn(!!token);
+    }, []);
+
+    const handleLogout = () => {
+        // Xóa token khỏi localStorage
+        localStorage.removeItem('accessToken');
+        // Không xóa giỏ hàng để giữ lại dữ liệu mua sắm
+
+        // Cập nhật trạng thái đăng nhập
+        setIsLoggedIn(false);
+
+        // Chuyển hướng về trang chính
+        navigate('/homepage');
+    };
+
     return (
         <nav className="flex justify-between items-center px-12 py-4 bg-white shadow-sm">
             {/* Logo */}
@@ -56,7 +77,18 @@ const Navbar = () => {
 
             {/* Auth Button */}
             <div>
-                <Link to="/login" className="bg-gray-900 text-white px-6 py-2 rounded-full font-medium inline-block">Đăng nhập/Đăng kí</Link>
+                {isLoggedIn ? (
+                    <button
+                        onClick={handleLogout}
+                        className="bg-red-600 text-white px-6 py-2 rounded-full font-medium hover:bg-red-700 transition-colors"
+                    >
+                        Đăng xuất
+                    </button>
+                ) : (
+                    <Link to="/login" className="bg-gray-900 text-white px-6 py-2 rounded-full font-medium inline-block hover:bg-gray-800 transition-colors">
+                        Đăng nhập/Đăng ký
+                    </Link>
+                )}
             </div>
         </nav>
     );

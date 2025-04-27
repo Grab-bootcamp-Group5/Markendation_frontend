@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { FiSearch, FiChevronRight, FiChevronLeft, FiX } from 'react-icons/fi';
 import { ingredientsList, dishesList, restaurantsList, getDishWithIngredients } from '../assets/assets';
-import ProductCard from '../components/ProductCard';
+import ProductCard from '../components/ingredients/ProductCard';
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';

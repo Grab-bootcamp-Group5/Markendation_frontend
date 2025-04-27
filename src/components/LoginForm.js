@@ -45,7 +45,7 @@ const LoginForm = () => {
                 localStorage.removeItem('rememberMe');
             }
 
-            navigate('/');
+            navigate('/homepage');
         } catch (error) {
             console.error('Login failed:', error);
             setError(

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiMapPin, FiNavigation, FiX } from "react-icons/fi";
-import { userService } from '../services/userService';
+import { userService } from '../services/userService'; // Import the userService
 
 const LocationSelector = ({ onLocationChange, initialLocation }) => {
     const [showLocationModal, setShowLocationModal] = useState(false);
@@ -12,120 +12,26 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
     const [isGettingLocation, setIsGettingLocation] = useState(false);
     const [isSavingLocation, setIsSavingLocation] = useState(false);
     const [error, setError] = useState('');
-    const [map, setMap] = useState(null);
-    const [autocomplete, setAutocomplete] = useState(null);
-    const mapRef = useRef(null);
-    const inputRef = useRef(null);
+    const [manualAddress, setManualAddress] = useState('');
 
     useEffect(() => {
-        if (showLocationModal && window.google && !map) {
-            initMap();
-        }
-    }, [showLocationModal]);
-
-    // Load Google Maps API
-    useEffect(() => {
-        const existingScript = document.getElementById('google-maps-script');
-        if (!window.google && !existingScript) {
-            const googleMapScript = document.createElement('script');
-            googleMapScript.id = 'google-maps-script';
-            googleMapScript.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_API_KEY}&libraries=places`;
-            googleMapScript.async = true;
-            googleMapScript.defer = true;
-            googleMapScript.onload = () => {
-                if (showLocationModal) {
-                    initMap();
+        try {
+            const savedLocation = localStorage.getItem('userLocation');
+            if (savedLocation) {
+                const parsedLocation = JSON.parse(savedLocation);
+                if (parsedLocation && parsedLocation.address) {
+                    if (!initialLocation ||
+                        parsedLocation.latitude !== initialLocation.latitude ||
+                        parsedLocation.longitude !== initialLocation.longitude) {
+                        setCurrentLocation(parsedLocation);
+                    }
                 }
-            };
-            document.body.appendChild(googleMapScript);
-        } else if (window.google && showLocationModal && !map) {
-            initMap();
+            }
+        } catch (error) {
+            console.error('Error loading saved location:', error);
         }
+    }, [initialLocation]);
 
-        return () => { };
-    }, [showLocationModal]);
-
-    const initMap = () => {
-        if (!mapRef.current || !window.google) {
-            console.log('Map reference or Google API not available');
-            return;
-        }
-
-        // Initialize the map
-        const mapInstance = new window.google.maps.Map(mapRef.current, {
-            center: {
-                lat: currentLocation.latitude || 21.0285,
-                lng: currentLocation.longitude || 105.8542
-            },
-            zoom: 14,
-            zoomControl: true,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false
-        });
-
-        // Create marker for selected location
-        const marker = new window.google.maps.Marker({
-            position: {
-                lat: currentLocation.latitude || 21.0285,
-                lng: currentLocation.longitude || 105.8542
-            },
-            map: mapInstance,
-            draggable: true,
-            animation: window.google.maps.Animation.DROP
-        });
-
-        window.google.maps.event.addListener(marker, 'dragend', () => {
-            const position = marker.getPosition();
-            const newLocation = {
-                latitude: position.lat(),
-                longitude: position.lng(),
-                address: 'Loading address...'
-            };
-
-            const geocoder = new window.google.maps.Geocoder();
-            geocoder.geocode({ location: position }, (results, status) => {
-                if (status === 'OK' && results[0]) {
-                    newLocation.address = results[0].formatted_address;
-                    setCurrentLocation(newLocation);
-                }
-            });
-        });
-
-        // Initialize Places Autocomplete
-        if (inputRef.current) {
-            const autocompleteInstance = new window.google.maps.places.Autocomplete(inputRef.current);
-            autocompleteInstance.setFields(['address_components', 'formatted_address', 'geometry', 'name']);
-
-            autocompleteInstance.addListener('place_changed', () => {
-                const place = autocompleteInstance.getPlace();
-
-                if (!place.geometry) {
-                    setError('Không tìm thấy thông tin cho địa điểm này');
-                    return;
-                }
-
-                // Update marker and map
-                marker.setPosition(place.geometry.location);
-                mapInstance.setCenter(place.geometry.location);
-
-                // Update location state
-                const newLocation = {
-                    address: place.formatted_address,
-                    latitude: place.geometry.location.lat(),
-                    longitude: place.geometry.location.lng()
-                };
-
-                setCurrentLocation(newLocation);
-            });
-
-            setAutocomplete(autocompleteInstance);
-        }
-
-        setMap(mapInstance);
-    };
-
-    // Get current location using browser geolocation API
     const getCurrentLocation = () => {
         if (!navigator.geolocation) {
             setError('Trình duyệt của bạn không hỗ trợ định vị.');
@@ -138,67 +44,100 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
+                console.log("Vị trí hiện tại:", latitude, longitude);
 
                 const location = {
                     latitude,
                     longitude,
-                    address: 'Loading address...'
+                    address: `Vị trí của bạn (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`
                 };
 
-                if (map && window.google) {
-                    const latLng = new window.google.maps.LatLng(latitude, longitude);
-
-                    map.setCenter(latLng);
-
-                    map.markers?.forEach(marker => {
-                        marker.setPosition(latLng);
-                    });
-
-                    const geocoder = new window.google.maps.Geocoder();
-                    geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
-                        if (status === 'OK' && results[0]) {
-                            location.address = results[0].formatted_address;
-                            setCurrentLocation(location);
-                        } else {
-                            location.address = 'Vị trí hiện tại của bạn';
-                            setCurrentLocation(location);
-                        }
-                    });
-                } else {
-                    location.address = 'Vị trí hiện tại của bạn';
-                    setCurrentLocation(location);
-                }
-
+                setCurrentLocation(location);
                 setIsGettingLocation(false);
             },
             (error) => {
                 console.error('Geolocation error:', error);
-                setError('Không thể lấy vị trí của bạn. Vui lòng cho phép truy cập vị trí.');
+                let errorMessage = 'Không thể lấy vị trí của bạn.';
+
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage += ' Vui lòng cho phép truy cập vị trí trong trình duyệt của bạn.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage += ' Thông tin vị trí không khả dụng.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage += ' Yêu cầu vị trí đã hết thời gian.';
+                        break;
+                }
+
+                setError(errorMessage);
                 setIsGettingLocation(false);
             },
-            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
+    };
+
+    const handleManualAddressChange = (e) => {
+        setManualAddress(e.target.value);
+    };
+
+    const setManualLocation = () => {
+        if (!manualAddress.trim()) {
+            setError('Vui lòng nhập địa chỉ');
+            return;
+        }
+
+        setCurrentLocation({
+            address: manualAddress,
+            latitude: 10.8231,
+            longitude: 106.6297
+        });
+
+        setManualAddress('');
+        setError('');
+    };
+
+    const sendLocationToBackend = async (locationData) => {
+        try {
+            console.log('Sending location to backend:', JSON.stringify(locationData, null, 2));
+
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                console.log('User not logged in, skipping API call');
+                return { success: true, message: 'User not logged in' };
+            }
+
+            const result = await userService.updateUserLocation(locationData);
+            console.log('Location updated successfully:', result);
+
+            return result;
+
+        } catch (error) {
+            console.error('Error sending location to backend:', error);
+            return { success: false, error: error.message };
+        }
     };
 
     const confirmSelection = async () => {
         try {
             setIsSavingLocation(true);
-            setError('');
 
-            const locationData = {
-                address: currentLocation.address,
-                longitude: currentLocation.longitude,
-                latitude: currentLocation.latitude
-            };
+            console.log("Location being saved:", JSON.stringify(currentLocation, null, 2));
 
-            const result = await userService.updateUserLocation(locationData);
+            localStorage.setItem('userLocation', JSON.stringify(currentLocation));
+            await sendLocationToBackend(currentLocation);
+            if (onLocationChange) {
+                onLocationChange(currentLocation);
+            }
 
-            onLocationChange(result.location || currentLocation);
-
+            const event = new CustomEvent('locationUpdated', { detail: currentLocation });
+            window.dispatchEvent(event);
             setShowLocationModal(false);
+
         } catch (error) {
-            console.error('Failed to update location:', error);
-            setError(error.response?.data?.message || 'Không thể cập nhật vị trí. Vui lòng thử lại sau.');
+            console.error('Error saving location:', error);
+            setError('Không thể lưu vị trí. Vị trí đã được lưu cục bộ.');
         } finally {
             setIsSavingLocation(false);
         }
@@ -220,7 +159,7 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
                 </button>
             </div>
 
-            {/* Location Modal */}
+            {/* Location Modal - Simplified version without maps */}
             {showLocationModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
@@ -239,18 +178,6 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
                                 {error}
                             </div>
                         )}
-
-                        {/* Search Box */}
-                        <div className="relative mb-4">
-                            <div className="flex">
-                                <input
-                                    ref={inputRef}
-                                    type="text"
-                                    placeholder="Nhập địa chỉ hoặc tên địa điểm..."
-                                    className="w-full p-3 border border-gray-300 rounded"
-                                />
-                            </div>
-                        </div>
 
                         {/* Current Location Button */}
                         <button
@@ -273,20 +200,39 @@ const LocationSelector = ({ onLocationChange, initialLocation }) => {
                             )}
                         </button>
 
-                        {/* Map Container */}
-                        <div
-                            ref={mapRef}
-                            className="w-full h-64 rounded-lg border border-gray-300 bg-gray-100 mb-4"
-                        >
-                            {!window.google && <div className="h-full flex items-center justify-center">Đang tải bản đồ...</div>}
+                        {/* Manual Address Input */}
+                        <div className="mb-4">
+                            <label className="block text-gray-700 text-sm font-medium mb-2">
+                                Hoặc nhập địa chỉ thủ công:
+                            </label>
+                            <div className="flex">
+                                <input
+                                    type="text"
+                                    value={manualAddress}
+                                    onChange={handleManualAddressChange}
+                                    placeholder="Nhập địa chỉ của bạn..."
+                                    className="flex-1 p-3 border border-gray-300 rounded-l"
+                                />
+                                <button
+                                    onClick={setManualLocation}
+                                    className="bg-gray-200 text-gray-700 px-4 rounded-r border border-gray-300 border-l-0"
+                                >
+                                    Đặt
+                                </button>
+                            </div>
                         </div>
 
                         {/* Selected Location */}
-                        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                            <h3 className="font-medium text-gray-800 mb-1">Vị trí đã chọn:</h3>
+                        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <h3 className="font-medium text-gray-800 mb-2">Vị trí đã chọn:</h3>
                             <div className="flex items-start">
                                 <FiMapPin className="mt-1 mr-2 text-orange-500 flex-shrink-0" />
-                                <span className="text-gray-700">{currentLocation.address}</span>
+                                <div>
+                                    <p className="text-gray-700">{currentLocation.address}</p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Tọa độ: {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
