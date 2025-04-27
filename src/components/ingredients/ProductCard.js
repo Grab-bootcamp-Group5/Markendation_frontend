@@ -3,7 +3,7 @@ import { useModal } from '../../context/ModalContext';
 import { useBasket } from '../../context/BasketContext';
 import { ingredientService } from '../../services/ingredientService';
 
-const ProductCard = ({ image, name, restaurantCount, id, category, unit }) => {
+const ProductCard = ({ id, vietnameseName, name, unit, image, category }) => {
     const { openModal } = useModal();
     const { addIngredient } = useBasket();
     const [loading, setLoading] = useState(false);
@@ -12,39 +12,35 @@ const ProductCard = ({ image, name, restaurantCount, id, category, unit }) => {
         try {
             setLoading(true);
 
-            // Fetch complete ingredient details from API
+            // Fetch đầy đủ thông tin nguyên liệu từ API
             const ingredientDetails = await ingredientService.getIngredientById(id);
 
-            // Combine API data with the props
+            // Kết hợp dữ liệu từ API với props
             const completeIngredient = {
                 id: ingredientDetails.id,
+                vietnameseName: ingredientDetails.vietnameseName,
                 name: ingredientDetails.name,
                 unit: ingredientDetails.unit,
-                // Keep the props that might not be in the API
-                image: ingredientDetails.imageURL || image || '/images/default-ingredient.jpg',
+                image: ingredientDetails.imageUrl,
                 category: ingredientDetails.category || category || 'Khác',
-                restaurantCount: restaurantCount || 5
+                quantity: 1  // Mặc định số lượng là 1
             };
 
-            // Add to basket (will handle both local state and API call)
-            await addIngredient(completeIngredient);
-
-            // Open modal to show the ingredient was added
             openModal('ingredients', [completeIngredient]);
         } catch (error) {
             console.error('Error fetching ingredient details:', error);
 
-            // If API fails, use the data we already have
+            // Nếu API lỗi, sử dụng dữ liệu có sẵn
             const fallbackIngredient = {
                 id,
+                vietnameseName,
                 name,
+                unit: unit || 'g',
                 image,
                 category,
-                restaurantCount,
-                unit: unit || 'piece'
+                quantity: 1  // Mặc định số lượng là 1
             };
 
-            await addIngredient(fallbackIngredient);
             openModal('ingredients', [fallbackIngredient]);
         } finally {
             setLoading(false);
@@ -69,8 +65,7 @@ const ProductCard = ({ image, name, restaurantCount, id, category, unit }) => {
             {/* Product info and add button */}
             <div className="flex justify-between items-center px-4 py-3 bg-gray-50 border-t border-gray-100">
                 <div>
-                    <h3 className="font-medium text-gray-900 text-lg">{name}</h3>
-                    <p className="text-orange-500 text-sm">{restaurantCount} Restaurants</p>
+                    <h3 className="font-medium text-gray-900 text-lg">{vietnameseName}</h3>
                     {unit && <p className="text-gray-500 text-xs">Đơn vị: {unit}</p>}
                 </div>
                 <button

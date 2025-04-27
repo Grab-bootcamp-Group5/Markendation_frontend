@@ -22,109 +22,74 @@ const BasketPage = () => {
         foodSection: true
     });
 
+    // Load basket from localStorage
     useEffect(() => {
-        const fetchBasket = async () => {
-            setLoading(true);
-            try {
-                // Check if user is logged in
-                if (localStorage.getItem('accessToken')) {
-                    // Fetch basket from API
-                    const basketData = await basketService.getBasket();
-                    if (basketData) {
-                        // Process the data to ensure all quantities are numbers
-                        if (basketData.ingredients) {
-                            basketData.ingredients = basketData.ingredients.map(item => ({
-                                ...item,
-                                quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
-                            }));
-                        }
+        try {
+            const storedBasket = localStorage.getItem('basketItems');
+            if (storedBasket) {
+                const parsedBasket = JSON.parse(storedBasket);
 
-                        if (basketData.dishes) {
-                            Object.keys(basketData.dishes).forEach(dishId => {
-                                if (basketData.dishes[dishId].ingredients) {
-                                    basketData.dishes[dishId].ingredients = basketData.dishes[dishId].ingredients.map(item => ({
-                                        ...item,
-                                        quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
-                                    }));
-                                }
-                            });
-                        }
+                // Đảm bảo phần ingredients và dishes tồn tại
+                if (!parsedBasket.ingredients) parsedBasket.ingredients = [];
+                if (!parsedBasket.dishes) parsedBasket.dishes = {};
 
-                        setBasketItems(basketData);
+                // Chuyển đổi số lượng của tất cả nguyên liệu thành số nguyên
+                parsedBasket.ingredients = parsedBasket.ingredients.map(item => ({
+                    ...item,
+                    quantity: parseInt(item.quantity, 10) || 1 // Đảm bảo tối thiểu là 1
+                }));
 
-                        // Set initial expanded state for dishes
-                        const initialExpandedState = {};
-                        Object.keys(basketData.dishes || {}).forEach(dishId => {
-                            initialExpandedState[dishId] = true;
-                        });
+                // Xử lý các món ăn
+                Object.keys(parsedBasket.dishes).forEach(dishId => {
+                    const dish = parsedBasket.dishes[dishId];
 
-                        setExpandedSections(prev => ({
-                            ...prev,
-                            dishes: initialExpandedState
+                    // Chuyển đổi số phần ăn thành số nguyên
+                    dish.servings = parseInt(dish.servings, 10) || 1;
+
+                    // Chuyển đổi số lượng của tất cả nguyên liệu trong món ăn thành số nguyên
+                    if (dish.ingredients) {
+                        dish.ingredients = dish.ingredients.map(ingredient => ({
+                            ...ingredient,
+                            quantity: parseInt(ingredient.quantity, 10) || 1
                         }));
+                    } else {
+                        dish.ingredients = [];
                     }
-                } else {
-                    // Not logged in, load from localStorage
-                    const storedBasket = localStorage.getItem('basketItems');
-                    if (storedBasket) {
-                        const parsedBasket = JSON.parse(storedBasket);
+                });
 
-                        // Process the data to ensure all quantities are numbers
-                        if (parsedBasket.ingredients) {
-                            parsedBasket.ingredients = parsedBasket.ingredients.map(item => ({
-                                ...item,
-                                quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
-                            }));
-                        }
+                setBasketItems(parsedBasket);
 
-                        if (parsedBasket.dishes) {
-                            Object.keys(parsedBasket.dishes).forEach(dishId => {
-                                if (parsedBasket.dishes[dishId].ingredients) {
-                                    parsedBasket.dishes[dishId].ingredients = parsedBasket.dishes[dishId].ingredients.map(item => ({
-                                        ...item,
-                                        quantity: typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity) || 0.1
-                                    }));
-                                }
-                            });
-                        }
+                // Thiết lập trạng thái mở rộng
+                const initialExpandedState = {};
+                Object.keys(parsedBasket.dishes).forEach(dishId => {
+                    initialExpandedState[dishId] = true;
+                });
 
-                        setBasketItems(parsedBasket);
-
-                        // Set initial expanded state for dishes
-                        const initialExpandedState = {};
-                        Object.keys(parsedBasket.dishes || {}).forEach(dishId => {
-                            initialExpandedState[dishId] = true;
-                        });
-
-                        setExpandedSections(prev => ({
-                            ...prev,
-                            dishes: initialExpandedState
-                        }));
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching basket:", error);
-                toast.error("Không thể tải giỏ hàng. Vui lòng thử lại sau.");
-
-                // Fall back to localStorage if API fails
-                const storedBasket = localStorage.getItem('basketItems');
-                if (storedBasket) {
-                    setBasketItems(JSON.parse(storedBasket));
-                }
-            } finally {
-                setLoading(false);
+                setExpandedSections(prev => ({
+                    ...prev,
+                    dishes: initialExpandedState
+                }));
             }
-        };
+        } catch (error) {
+            console.error("Error loading basket:", error);
+            // Nếu có lỗi, thiết lập giỏ hàng trống
+            setBasketItems({
+                ingredients: [],
+                dishes: {}
+            });
+        }
 
-        fetchBasket();
+        setLoading(false);
     }, []);
 
+    // Save to localStorage when items change
     useEffect(() => {
         if (!loading) {
             localStorage.setItem('basketItems', JSON.stringify(basketItems));
         }
     }, [basketItems, loading]);
 
+    // Toggle section visibility
     const toggleSection = (section, id = null) => {
         if (section === 'ingredients') {
             setExpandedSections(prev => ({
@@ -147,11 +112,18 @@ const BasketPage = () => {
         }
     };
 
-    const updateQuantity = async (id, newQuantity, isDishIngredient = false, dishId = null) => {
-        newQuantity = parseFloat(parseFloat(newQuantity).toFixed(1));
+    // Hàm cập nhật số lượng
+    const updateQuantity = (id, newQuantity, isDishIngredient = false, dishId = null) => {
+        // Đảm bảo newQuantity là số nguyên
+        newQuantity = parseInt(newQuantity, 10);
 
-        // Update local state first for a responsive UI
+        // Kiểm tra tính hợp lệ, tối thiểu là 1
+        if (isNaN(newQuantity) || newQuantity < 1) {
+            newQuantity = 1;
+        }
+
         if (isDishIngredient && dishId) {
+            // Cập nhật số lượng cho nguyên liệu trong món ăn
             setBasketItems(prevState => {
                 const updatedDishes = { ...prevState.dishes };
                 if (updatedDishes[dishId]) {
@@ -174,6 +146,7 @@ const BasketPage = () => {
                 };
             });
         } else {
+            // Cập nhật số lượng cho nguyên liệu độc lập
             setBasketItems(prevState => {
                 const updatedIngredients = prevState.ingredients.map(item => {
                     if (item.id === id) {
@@ -187,15 +160,13 @@ const BasketPage = () => {
                     ingredients: updatedIngredients
                 };
             });
-
-            // Update in API if user is logged in
-            // Note: Add API call here when update endpoint is available
         }
     };
 
-    const removeItem = async (id, isDishIngredient = false, dishId = null) => {
-        // Update local state first for a responsive UI
+    // Remove item from basket
+    const removeItem = (id, isDishIngredient = false, dishId = null) => {
         if (isDishIngredient && dishId) {
+            // Remove ingredient from dish
             setBasketItems(prevState => {
                 const updatedDishes = { ...prevState.dishes };
                 if (updatedDishes[dishId]) {
@@ -228,6 +199,7 @@ const BasketPage = () => {
                 };
             });
         } else if (dishId) {
+            // Remove entire dish
             setBasketItems(prevState => {
                 const updatedDishes = { ...prevState.dishes };
                 delete updatedDishes[dishId];
@@ -246,54 +218,58 @@ const BasketPage = () => {
                     dishes: updatedDishes
                 };
             });
-
-            // Delete dish from API if user is logged in
-            // Note: Add API call here when delete dish endpoint is available
         } else {
+            // Remove standalone ingredient
             setBasketItems(prevState => ({
                 ...prevState,
                 ingredients: prevState.ingredients.filter(item => item.id !== id)
             }));
-
-            // Delete ingredient from API if user is logged in
-            // Note: Add API call here when delete ingredient endpoint is available
         }
     };
 
+    // Cập nhật số phần ăn của món ăn
+    const updateDishServings = (dishId, newServings) => {
+        // Đảm bảo newServings là số nguyên
+        newServings = parseInt(newServings, 10);
+
+        // Kiểm tra tính hợp lệ
+        if (isNaN(newServings) || newServings <= 0) {
+            // Nếu số lượng <= 0, xóa món ăn khỏi giỏ hàng
+            removeItem(null, false, dishId);
+            return;
+        }
+
+        // Cập nhật số lượng phần ăn
+        setBasketItems(prev => ({
+            ...prev,
+            dishes: {
+                ...prev.dishes,
+                [dishId]: {
+                    ...prev.dishes[dishId],
+                    servings: newServings
+                }
+            }
+        }));
+    };
+
+    // Get total number of items
     const getTotalItemCount = () => {
         const ingredientCount = basketItems.ingredients.length;
-
         let dishIngredientsCount = 0;
         Object.values(basketItems.dishes).forEach(dish => {
             dishIngredientsCount += dish.ingredients.length;
         });
-
         return ingredientCount + dishIngredientsCount;
     };
 
+    // Save cart to server
     const saveCart = async () => {
-        // API call to save cart not provided in the documentation
-        // This would be implemented when the endpoint is available
-        toast.success("Đã lưu giỏ hàng!");
-    };
-
-    const updateDishServings = async (dishId, newServings) => {
-        if (newServings <= 0) {
-            removeItem(null, false, dishId);
-        } else {
-            setBasketItems(prev => ({
-                ...prev,
-                dishes: {
-                    ...prev.dishes,
-                    [dishId]: {
-                        ...prev.dishes[dishId],
-                        servings: newServings
-                    }
-                }
-            }));
-
-            // Update in API if user is logged in
-            // Note: Add API call here when update dish endpoint is available
+        try {
+            await basketService.updateBasket(basketItems);
+            toast.success("Đã lưu giỏ hàng thành công!");
+        } catch (error) {
+            console.error("Error saving basket:", error);
+            toast.error("Không thể lưu giỏ hàng. Vui lòng thử lại sau.");
         }
     };
 

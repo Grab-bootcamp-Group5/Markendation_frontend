@@ -1,9 +1,7 @@
 import React from 'react';
 import ProductCard from './ProductCard';
 
-
 const FeaturedSection = ({ ingredients }) => {
-
     if (!ingredients || ingredients.length === 0) {
         return (
             <div className="mb-10 bg-gradient-to-r from-orange-100 to-orange-50 rounded-xl p-6">
@@ -35,9 +33,10 @@ const FeaturedSection = ({ ingredients }) => {
                     <ProductCard
                         key={ingredient.id}
                         id={ingredient.id}
-                        image={ingredient.image}
+                        vietnameseName={ingredient.vietnameseName}
                         name={ingredient.name}
-                        restaurantCount={ingredient.restaurantCount}
+                        image={ingredient.imageUrl}
+                        category={ingredient.category}
                         unit={ingredient.unit}
                     />
                 ))}
@@ -46,5 +45,4 @@ const FeaturedSection = ({ ingredients }) => {
     );
 };
 
-
-export default FeaturedSection
+export default FeaturedSection;

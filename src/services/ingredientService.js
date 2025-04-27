@@ -14,7 +14,7 @@ export const ingredientService = {
     },
 
     // Get a paginated list of ingredients
-    getIngredients: async (pageNo = 1, pageSize = 30) => {
+    getIngredients: async (pageNo = 0, pageSize = 30) => {
         try {
             const response = await axiosPublic.get(`/public/ingredients?pageSize=${pageSize}&pageNo=${pageNo}`);
             return response.data;

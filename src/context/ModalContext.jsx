@@ -1,16 +1,19 @@
 import React, { createContext, useState, useContext } from 'react';
 import ShoppingModal from '../components/ShoppingModal';
 
+// Tạo context để quản lý trạng thái modal xuyên suốt ứng dụng
 const ModalContext = createContext();
 
+// Hook để sử dụng ModalContext
 export const useModal = () => useContext(ModalContext);
 
 export const ModalProvider = ({ children }) => {
+    // Trạng thái của modal
     const [modalState, setModalState] = useState({
-        isOpen: false,
-        type: '',
-        itemData: null,
-        searchQuery: ''
+        isOpen: false,     // Trạng thái mở/đóng
+        type: '',          // Loại modal (dish, ingredients, search)
+        itemData: null,    // Dữ liệu item hiển thị trong modal
+        searchQuery: ''    // Query tìm kiếm (khi type là search)
     });
 
     // Mở modal với các thông số
@@ -23,7 +26,7 @@ export const ModalProvider = ({ children }) => {
         });
     };
 
-    // Đóng modal
+    // Đóng modal và reset các thông số
     const closeModal = () => {
         setModalState({
             isOpen: false,
@@ -36,7 +39,11 @@ export const ModalProvider = ({ children }) => {
     return (
         <ModalContext.Provider value={{ modalState, openModal, closeModal }}>
             {children}
-            {/* Render modal toàn cục ở đây */}
+            {/* 
+              Render ShoppingModal ở cấp root của ứng dụng
+              Điều này giúp chúng ta có thể mở modal từ bất kỳ component nào
+              mà không cần truyền props qua nhiều cấp
+            */}
             <ShoppingModal
                 isOpen={modalState.isOpen}
                 onClose={closeModal}

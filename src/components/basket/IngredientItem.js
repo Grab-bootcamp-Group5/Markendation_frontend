@@ -15,7 +15,7 @@ const IngredientItem = ({
                     />
                 </div>
                 <div>
-                    <p className="text-lg font-medium">{item.name}</p>
+                    <p className="text-lg font-medium">{item.vietnameseName}</p>
                 </div>
             </div>
             <div className="w-[60%] flex justify-end items-center pr-4">

@@ -197,11 +197,11 @@ const HomePage = () => {
                                 <div key={ingredient.id} className="flex-shrink-0 w-64">
                                     <ProductCard
                                         id={ingredient.id}
+                                        vietnameseName={ingredient.vietnameseName}
                                         name={ingredient.name}
+                                        unit={ingredient.unit}
                                         image={ingredient.image}
                                         category={ingredient.category}
-                                        restaurantCount={ingredient.restaurantCount}
-                                        unit={ingredient.unit}
                                     />
                                 </div>
                             ))}

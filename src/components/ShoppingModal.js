@@ -2,23 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { getIngredientById, getDishWithIngredients, images } from '../assets/assets';
-import { basketService } from '../services/basketService';
-import { useBasket } from '../context/BasketContext';
 
 const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
     const [quantity, setQuantity] = useState(1);
     const [dishWithIngredients, setDishWithIngredients] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const { basketItems } = useBasket();
 
+    // Reset modal khi mở
     useEffect(() => {
         if (isOpen) {
-            if (type === 'dish') {
-                setQuantity(1);
-            } else {
-                setQuantity(1);
-            }
+            // Reset về giá trị mặc định
+            setQuantity(1);
 
+            // Lấy thông tin món ăn nếu cần
             if (type === 'dish' && itemData && itemData.id) {
                 const dish = getDishWithIngredients(itemData.id);
                 setDishWithIngredients(dish);
@@ -30,104 +25,83 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
 
     if (!isOpen) return null;
 
+    // Xử lý thay đổi số lượng
     const handleQuantityChange = (value) => {
-        const parsedValue = parseFloat(value);
-
-        if (type === 'dish') {
-            const newValue = isNaN(parsedValue) ? 1 : Math.max(1, Math.round(parsedValue));
-            setQuantity(newValue);
-        } else {
-            const newValue = isNaN(parsedValue) ? 0.1 : Math.max(0.1, parsedValue);
-            setQuantity(newValue);
-        }
+        const parsedValue = parseInt(value, 10);
+        setQuantity(isNaN(parsedValue) || parsedValue < 1 ? 1 : parsedValue);
     };
 
-    const addToCart = async () => {
-        setIsLoading(true);
-        try {
-            const storedBasket = localStorage.getItem('basketItems');
-            let basketItems = storedBasket ? JSON.parse(storedBasket) : {
-                ingredients: [],
-                dishes: {}
-            };
+    // Xử lý thêm vào giỏ hàng KHI NGƯỜI DÙNG BẤM NÚT
+    const addToCart = () => {
+        // Lấy dữ liệu hiện tại từ localStorage
+        const storedBasket = localStorage.getItem('basketItems');
+        let basketItems = storedBasket ? JSON.parse(storedBasket) : {
+            ingredients: [],
+            dishes: {}
+        };
 
-            if (type === 'dish' && dishWithIngredients) {
-                if (basketItems.dishes[dishWithIngredients.id]) {
-                    toast.warning(`${dishWithIngredients.name} đã có trong giỏ hàng!`);
-                    setIsLoading(false);
-                    return;
-                }
+        if (type === 'dish' && dishWithIngredients) {
+            // Thêm món ăn
+            if (basketItems.dishes[dishWithIngredients.id]) {
+                toast.warning(`${dishWithIngredients.name} đã có trong giỏ hàng!`);
+                return;
+            }
 
-                const formattedIngredients = dishWithIngredients.ingredients.map(ingredient => ({
+            basketItems.dishes[dishWithIngredients.id] = {
+                id: dishWithIngredients.id,
+                name: dishWithIngredients.name,
+                image: dishWithIngredients.image,
+                servings: quantity,
+                ingredients: dishWithIngredients.ingredients.map(ingredient => ({
                     id: ingredient.id,
                     name: ingredient.name,
+                    vietnameseName: ingredient.vietnameseName,
                     image: ingredient.image,
                     quantity: 1,
                     unit: ingredient.unit,
                     category: ingredient.category
-                }));
+                }))
+            };
 
-                basketItems.dishes[dishWithIngredients.id] = {
-                    id: dishWithIngredients.id,
-                    name: dishWithIngredients.name,
-                    image: dishWithIngredients.image,
-                    servings: quantity,
-                    ingredients: formattedIngredients
-                };
+            toast.success(`Đã thêm ${dishWithIngredients.name} vào giỏ hàng!`);
+        } else if ((type === 'ingredients' || type === 'search') && itemData) {
+            // Thêm nguyên liệu
+            const ingredientsArray = Array.isArray(itemData) ? itemData : [itemData];
 
-                // Note: Add API call for dish when endpoint is available
+            ingredientsArray.forEach(ingredient => {
+                const existingItemIndex = basketItems.ingredients.findIndex(item => item.id === ingredient.id);
 
-                toast.success(`Đã thêm ${dishWithIngredients.name} vào giỏ hàng!`);
-            } else if ((type === 'ingredients' || type === 'search') && itemData) {
-                const ingredientsArray = Array.isArray(itemData) ? itemData : [itemData];
-
-                // Update local storage
-                for (const ingredient of ingredientsArray) {
-                    const existingItemIndex = basketItems.ingredients.findIndex(item => item.id === ingredient.id);
-
-                    if (existingItemIndex !== -1) {
-                        basketItems.ingredients[existingItemIndex].quantity += quantity;
-                    } else {
-                        basketItems.ingredients.push({
-                            id: ingredient.id,
-                            name: ingredient.name,
-                            image: ingredient.image,
-                            quantity: quantity,
-                            unit: ingredient.unit,
-                            category: ingredient.category
-                        });
-                    }
-
-                    // Send to API if user is logged in
-                    if (localStorage.getItem('accessToken')) {
-                        await basketService.addIngredient({
-                            id: ingredient.id,
-                            vietnameseName: ingredient.vietnameseName || ingredient.name,
-                            unit: ingredient.unit || 'piece',
-                            quantity: quantity
-                        });
-                    }
-                }
-
-                if (type === 'search' && searchQuery) {
-                    toast.success(`Đã thêm nguyên liệu cho "${searchQuery}" vào giỏ hàng!`);
+                if (existingItemIndex !== -1) {
+                    const currentQty = parseInt(basketItems.ingredients[existingItemIndex].quantity, 10) || 0;
+                    basketItems.ingredients[existingItemIndex].quantity = currentQty + quantity;
                 } else {
-                    toast.success(`Đã thêm ${ingredientsArray.length > 1 ? 'các nguyên liệu' : ingredientsArray[0].name} vào giỏ hàng!`);
+                    basketItems.ingredients.push({
+                        id: ingredient.id,
+                        vietnameseName: ingredient.vietnameseName,
+                        name: ingredient.name,
+                        image: ingredient.image,
+                        quantity: quantity,
+                        unit: ingredient.unit,
+                        category: ingredient.category
+                    });
                 }
+            });
+
+            if (type === 'search' && searchQuery) {
+                toast.success(`Đã thêm nguyên liệu cho "${searchQuery}" vào giỏ hàng!`);
+            } else {
+                toast.success(`Đã thêm ${ingredientsArray.length > 1 ? 'các nguyên liệu' : ingredientsArray[0].vietnameseName} vào giỏ hàng!`);
             }
-
-            localStorage.setItem('basketItems', JSON.stringify(basketItems));
-
-            const event = new CustomEvent('basketUpdated');
-            window.dispatchEvent(event);
-
-            onClose();
-        } catch (error) {
-            console.error('Error adding to cart:', error);
-            toast.error('Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại.');
-        } finally {
-            setIsLoading(false);
         }
+
+        // Lưu vào localStorage
+        localStorage.setItem('basketItems', JSON.stringify(basketItems));
+
+        // Thông báo cập nhật
+        window.dispatchEvent(new CustomEvent('basketUpdated'));
+
+        // Đóng modal
+        onClose();
     };
 
     const getUnit = () => {
@@ -135,26 +109,24 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
             return 'phần';
         } else if ((type === 'ingredients' || type === 'search') && itemData) {
             if (Array.isArray(itemData) && itemData.length > 0) {
-                const firstItem = itemData[0];
-                return firstItem.unit;
+                return itemData[0].unit;
             }
-            const ingredient = Array.isArray(itemData) ? itemData[0] : itemData;
-            return ingredient?.unit;
+            return Array.isArray(itemData) ? itemData[0]?.unit : itemData?.unit;
         }
-        return 'KG';
+        return '';
     };
 
-    // Xác định title, image và ingredients để hiển thị
+    // Xác định title, image và ingredients
     let title = '';
     let image = '';
     let ingredients = [];
     let showMultipleIngredients = false;
 
     if (type === 'dish' && dishWithIngredients) {
-        title = dishWithIngredients.name;
+        title = dishWithIngredients.vietnameseName;
         image = dishWithIngredients.image;
         ingredients = dishWithIngredients.ingredients.map(ing => ({
-            name: ing.name,
+            name: ing.vietnameseName,
             category: ing.category
         }));
     } else if (type === 'ingredients') {
@@ -164,7 +136,7 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
             image = itemData[0]?.image || '';
         } else {
             const ingredient = Array.isArray(itemData) ? itemData[0] : itemData;
-            title = ingredient?.name || 'Nguyên liệu';
+            title = ingredient?.vietnameseName || 'Nguyên liệu';
             image = ingredient?.image || '';
         }
     } else if (type === 'search') {
@@ -176,7 +148,7 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white rounded-3xl w-full max-w-xl max-h-[90vh] overflow-auto relative">
-                {/* Close button at top right */}
+                {/* Nút đóng */}
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 z-10 bg-black text-white rounded-full w-10 h-10 flex items-center justify-center"
@@ -185,14 +157,14 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                 </button>
 
                 <div className="flex flex-col md:flex-row">
-                    {/* Left section with text */}
+                    {/* Phần nội dung bên trái */}
                     <div className="p-6 flex-1">
-                        {/* Title */}
+                        {/* Tiêu đề */}
                         <h2 className="text-2xl font-bold mb-6">
                             {title}
                         </h2>
 
-                        {/* Ingredients list for dishes */}
+                        {/* Danh sách nguyên liệu cho món ăn */}
                         {type === 'dish' && ingredients.length > 0 && (
                             <div className="mb-8">
                                 <h3 className="text-xl font-bold mb-4">Thành phần</h3>
@@ -207,7 +179,7 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                             </div>
                         )}
 
-                        {/* Multiple ingredients list for search/uploaded image results */}
+                        {/* Hiển thị nhiều nguyên liệu */}
                         {showMultipleIngredients && (
                             <div className="mb-8">
                                 <h3 className="text-xl font-bold mb-4">Nguyên liệu được nhận diện</h3>
@@ -230,7 +202,7 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                             </div>
                         )}
 
-                        {/* Quantity input */}
+                        {/* Nhập số lượng */}
                         <div className="mb-6">
                             <div className="flex items-center justify-between mb-4">
                                 <label className="text-xl font-bold">
@@ -240,8 +212,8 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                             <div className="flex items-center">
                                 <input
                                     type="number"
-                                    min={type === 'dish' ? "1" : "0.1"}
-                                    step={type === 'dish' ? "1" : "0.1"}
+                                    min="1"
+                                    step="1"
                                     value={quantity}
                                     onChange={(e) => handleQuantityChange(e.target.value)}
                                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-full text-center"
@@ -252,27 +224,19 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                             </div>
                         </div>
 
-                        {/* Add to cart button */}
+                        {/* Nút thêm vào giỏ hàng */}
                         <button
                             onClick={addToCart}
-                            disabled={isLoading}
                             className="w-full bg-green-600 text-white py-4 rounded-full font-bold hover:bg-green-700 transition-colors flex items-center justify-center"
                         >
-                            {isLoading ? (
-                                <svg className="animate-spin h-5 w-5 text-white mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            ) : (
-                                <span className="mr-2">
-                                    <img className="h-6 w-6" src={images.cart} />
-                                </span>
-                            )}
-                            {isLoading ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
+                            <span className="mr-2">
+                                <img className="h-6 w-6" src={images.cart} alt="Cart icon" />
+                            </span>
+                            Thêm vào giỏ hàng
                         </button>
                     </div>
 
-                    {/* Right section with image */}
+                    {/* Phần hình ảnh bên phải */}
                     <div className="flex-shrink-0 w-full md:w-64 flex items-center justify-center p-4">
                         <div className="w-48 h-64 overflow-hidden rounded-3xl bg-gray-100 flex items-center justify-center">
                             {image ? (
@@ -282,7 +246,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
-                                // Hiển thị icon mặc định nếu không có hình ảnh
                                 <div className="text-gray-400 flex flex-col items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7Z" />

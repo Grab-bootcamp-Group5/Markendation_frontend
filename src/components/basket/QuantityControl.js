@@ -4,10 +4,11 @@ import { FiTrash2 } from 'react-icons/fi';
 const QuantityControl = ({
     item, isDishIngredient = false, dishId = null, updateQuantity, removeItem
 }) => {
-    const [inputValue, setInputValue] = useState(item.quantity.toFixed(1));
+    const [inputValue, setInputValue] = useState(item.quantity);
 
+    // Cập nhật giá trị input khi item.quantity thay đổi
     useEffect(() => {
-        setInputValue(item.quantity.toFixed(1));
+        setInputValue(item.quantity);
     }, [item.quantity]);
 
     const handleInputChange = (e) => {
@@ -15,10 +16,15 @@ const QuantityControl = ({
     };
 
     const handleBlur = () => {
-        const newQuantity = parseFloat(parseFloat(inputValue).toFixed(1));
-        if (isNaN(newQuantity) || newQuantity <= 0) {
-            setInputValue(item.quantity.toFixed(1));
+        // Chuyển thành số nguyên
+        const newQuantity = parseInt(inputValue, 10);
+
+        // Kiểm tra giá trị hợp lệ
+        if (isNaN(newQuantity) || newQuantity < 1) {
+            // Nếu không hợp lệ, quay lại giá trị cũ
+            setInputValue(item.quantity);
         } else {
+            // Cập nhật số lượng
             updateQuantity(item.id, newQuantity, isDishIngredient, dishId);
         }
     };
@@ -33,9 +39,9 @@ const QuantityControl = ({
         <div className="flex items-center">
             <button
                 onClick={() => {
-                    const newQuantity = item.quantity > 0.1 ? parseFloat((item.quantity - 0.1).toFixed(1)) : 0.1;
+                    // Giảm số lượng (tối thiểu là 1)
+                    const newQuantity = Math.max(1, parseInt(item.quantity, 10) - 1);
                     updateQuantity(item.id, newQuantity, isDishIngredient, dishId);
-                    setInputValue(newQuantity.toFixed(1));
                 }}
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-black text-white"
             >
@@ -43,7 +49,9 @@ const QuantityControl = ({
             </button>
 
             <input
-                type="text"
+                type="number"
+                min="1"
+                step="1"
                 value={inputValue}
                 onChange={handleInputChange}
                 onBlur={handleBlur}
@@ -54,9 +62,9 @@ const QuantityControl = ({
 
             <button
                 onClick={() => {
-                    const newQuantity = parseFloat((item.quantity + 0.1).toFixed(1));
+                    // Tăng số lượng
+                    const newQuantity = parseInt(item.quantity, 10) + 1;
                     updateQuantity(item.id, newQuantity, isDishIngredient, dishId);
-                    setInputValue(newQuantity.toFixed(1));
                 }}
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-black text-white"
             >
