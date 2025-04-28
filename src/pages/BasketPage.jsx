@@ -2,92 +2,50 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { HiOutlineCalculator } from "react-icons/hi";
 import BasketHeader from '../components/basket/BasketHeader';
 import IngredientSection from '../components/basket/IngredientSection';
 import DishSection from '../components/basket/DishSection';
+import { useBasket } from '../context/BasketContext';
 import { basketService } from '../services/basketService';
 import { toast } from 'react-toastify';
 
 const BasketPage = () => {
-    const [basketItems, setBasketItems] = useState({
-        ingredients: [],
-        dishes: {}
-    });
-    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+
+    // Sử dụng BasketContext
+    const {
+        basketItems,
+        loading,
+        updateBasket,
+        removeIngredient,
+        removeDish,
+        getTotalItemCount
+    } = useBasket();
+
     const [expandedSections, setExpandedSections] = useState({
         ingredients: true,
         dishes: {},
         foodSection: true
     });
 
-    // Load basket from localStorage
+    const [calculating, setCalculating] = useState(false);
+
+    // Thiết lập trạng thái mở rộng ban đầu cho các món ăn
     useEffect(() => {
-        try {
-            const storedBasket = localStorage.getItem('basketItems');
-            if (storedBasket) {
-                const parsedBasket = JSON.parse(storedBasket);
-
-                // Đảm bảo phần ingredients và dishes tồn tại
-                if (!parsedBasket.ingredients) parsedBasket.ingredients = [];
-                if (!parsedBasket.dishes) parsedBasket.dishes = {};
-
-                // Chuyển đổi số lượng của tất cả nguyên liệu thành số nguyên
-                parsedBasket.ingredients = parsedBasket.ingredients.map(item => ({
-                    ...item,
-                    quantity: parseInt(item.quantity, 10) || 1 // Đảm bảo tối thiểu là 1
-                }));
-
-                // Xử lý các món ăn
-                Object.keys(parsedBasket.dishes).forEach(dishId => {
-                    const dish = parsedBasket.dishes[dishId];
-
-                    // Chuyển đổi số phần ăn thành số nguyên
-                    dish.servings = parseInt(dish.servings, 10) || 1;
-
-                    // Chuyển đổi số lượng của tất cả nguyên liệu trong món ăn thành số nguyên
-                    if (dish.ingredients) {
-                        dish.ingredients = dish.ingredients.map(ingredient => ({
-                            ...ingredient,
-                            quantity: parseInt(ingredient.quantity, 10) || 1
-                        }));
-                    } else {
-                        dish.ingredients = [];
-                    }
-                });
-
-                setBasketItems(parsedBasket);
-
-                // Thiết lập trạng thái mở rộng
-                const initialExpandedState = {};
-                Object.keys(parsedBasket.dishes).forEach(dishId => {
-                    initialExpandedState[dishId] = true;
-                });
-
-                setExpandedSections(prev => ({
-                    ...prev,
-                    dishes: initialExpandedState
-                }));
-            }
-        } catch (error) {
-            console.error("Error loading basket:", error);
-            // Nếu có lỗi, thiết lập giỏ hàng trống
-            setBasketItems({
-                ingredients: [],
-                dishes: {}
+        if (!loading && basketItems.dishes) {
+            const initialExpandedState = {};
+            Object.keys(basketItems.dishes).forEach(dishId => {
+                initialExpandedState[dishId] = true;
             });
-        }
 
-        setLoading(false);
-    }, []);
-
-    // Save to localStorage when items change
-    useEffect(() => {
-        if (!loading) {
-            localStorage.setItem('basketItems', JSON.stringify(basketItems));
+            setExpandedSections(prev => ({
+                ...prev,
+                dishes: initialExpandedState
+            }));
         }
-    }, [basketItems, loading]);
+    }, [loading, basketItems.dishes]);
 
     // Toggle section visibility
     const toggleSection = (section, id = null) => {
@@ -112,71 +70,62 @@ const BasketPage = () => {
         }
     };
 
-    // Hàm cập nhật số lượng
-    const updateQuantity = (id, newQuantity, isDishIngredient = false, dishId = null) => {
-        // Đảm bảo newQuantity là số nguyên
-        newQuantity = parseInt(newQuantity, 10);
+    // Hàm cập nhật số lượng nguyên liệu
+    const handleUpdateQuantity = async (id, newQuantity, isDishIngredient = false, dishId = null) => {
+        try {
+            let updatedBasketItems = { ...basketItems };
 
-        // Kiểm tra tính hợp lệ, tối thiểu là 1
-        if (isNaN(newQuantity) || newQuantity < 1) {
-            newQuantity = 1;
-        }
-
-        if (isDishIngredient && dishId) {
-            // Cập nhật số lượng cho nguyên liệu trong món ăn
-            setBasketItems(prevState => {
-                const updatedDishes = { ...prevState.dishes };
-                if (updatedDishes[dishId]) {
-                    const updatedIngredients = updatedDishes[dishId].ingredients.map(item => {
+            if (isDishIngredient && dishId) {
+                // Cập nhật số lượng cho nguyên liệu trong món ăn
+                if (updatedBasketItems.dishes[dishId]) {
+                    const updatedIngredients = updatedBasketItems.dishes[dishId].ingredients.map(item => {
                         if (item.id === id) {
                             return { ...item, quantity: newQuantity };
                         }
                         return item;
                     });
 
-                    updatedDishes[dishId] = {
-                        ...updatedDishes[dishId],
+                    updatedBasketItems.dishes[dishId] = {
+                        ...updatedBasketItems.dishes[dishId],
                         ingredients: updatedIngredients
                     };
                 }
-
-                return {
-                    ...prevState,
-                    dishes: updatedDishes
-                };
-            });
-        } else {
-            // Cập nhật số lượng cho nguyên liệu độc lập
-            setBasketItems(prevState => {
-                const updatedIngredients = prevState.ingredients.map(item => {
+            } else {
+                // Cập nhật số lượng cho nguyên liệu độc lập
+                updatedBasketItems.ingredients = updatedBasketItems.ingredients.map(item => {
                     if (item.id === id) {
                         return { ...item, quantity: newQuantity };
                     }
                     return item;
                 });
+            }
 
-                return {
-                    ...prevState,
-                    ingredients: updatedIngredients
-                };
-            });
+            // Lưu vào localStorage (không cần gọi API)
+            localStorage.setItem('basketItems', JSON.stringify(updatedBasketItems));
+            // Cập nhật state trong context (không gọi API)
+            await updateBasket(updatedBasketItems);
+        } catch (error) {
+            console.error("Error updating quantity:", error);
+            toast.error("Không thể cập nhật số lượng. Vui lòng thử lại sau.");
         }
     };
 
-    // Remove item from basket
-    const removeItem = (id, isDishIngredient = false, dishId = null) => {
-        if (isDishIngredient && dishId) {
-            // Remove ingredient from dish
-            setBasketItems(prevState => {
-                const updatedDishes = { ...prevState.dishes };
-                if (updatedDishes[dishId]) {
-                    const updatedIngredients = updatedDishes[dishId].ingredients.filter(
+    // Hàm xóa item
+    const handleRemoveItem = async (id, isDishIngredient = false, dishId = null) => {
+        try {
+            if (isDishIngredient && dishId) {
+                // Xóa nguyên liệu trong món ăn
+                let updatedBasketItems = { ...basketItems };
+                if (updatedBasketItems.dishes[dishId]) {
+                    const updatedIngredients = updatedBasketItems.dishes[dishId].ingredients.filter(
                         item => item.id !== id
                     );
 
                     if (updatedIngredients.length === 0) {
-                        delete updatedDishes[dishId];
+                        // Nếu không còn nguyên liệu, xóa món ăn
+                        delete updatedBasketItems.dishes[dishId];
 
+                        // Cập nhật trạng thái expanded
                         setExpandedSections(prev => {
                             const updatedExpanded = { ...prev.dishes };
                             delete updatedExpanded[dishId];
@@ -186,24 +135,24 @@ const BasketPage = () => {
                             };
                         });
                     } else {
-                        updatedDishes[dishId] = {
-                            ...updatedDishes[dishId],
+                        // Cập nhật danh sách nguyên liệu của món ăn
+                        updatedBasketItems.dishes[dishId] = {
+                            ...updatedBasketItems.dishes[dishId],
                             ingredients: updatedIngredients
                         };
                     }
+
+                    // Lưu vào localStorage (không cần gọi API)
+                    localStorage.setItem('basketItems', JSON.stringify(updatedBasketItems));
+                    // Cập nhật state trong context (không gọi API)
+                    await updateBasket(updatedBasketItems);
                 }
+            } else if (dishId) {
+                // Xóa toàn bộ món ăn
+                let updatedBasketItems = { ...basketItems };
+                delete updatedBasketItems.dishes[dishId];
 
-                return {
-                    ...prevState,
-                    dishes: updatedDishes
-                };
-            });
-        } else if (dishId) {
-            // Remove entire dish
-            setBasketItems(prevState => {
-                const updatedDishes = { ...prevState.dishes };
-                delete updatedDishes[dishId];
-
+                // Cập nhật trạng thái expanded
                 setExpandedSections(prev => {
                     const updatedExpanded = { ...prev.dishes };
                     delete updatedExpanded[dishId];
@@ -213,64 +162,116 @@ const BasketPage = () => {
                     };
                 });
 
-                return {
-                    ...prevState,
-                    dishes: updatedDishes
-                };
-            });
-        } else {
-            // Remove standalone ingredient
-            setBasketItems(prevState => ({
-                ...prevState,
-                ingredients: prevState.ingredients.filter(item => item.id !== id)
-            }));
+                // Lưu vào localStorage (không cần gọi API)
+                localStorage.setItem('basketItems', JSON.stringify(updatedBasketItems));
+                // Cập nhật state trong context (không gọi API)
+                await updateBasket(updatedBasketItems);
+            } else {
+                // Xóa nguyên liệu độc lập
+                let updatedBasketItems = { ...basketItems };
+                updatedBasketItems.ingredients = updatedBasketItems.ingredients.filter(item => item.id !== id);
+
+                // Lưu vào localStorage (không cần gọi API)
+                localStorage.setItem('basketItems', JSON.stringify(updatedBasketItems));
+                // Cập nhật state trong context (không gọi API)
+                await updateBasket(updatedBasketItems);
+            }
+        } catch (error) {
+            console.error("Error removing item:", error);
+            toast.error("Không thể xóa mục. Vui lòng thử lại sau.");
         }
     };
 
     // Cập nhật số phần ăn của món ăn
-    const updateDishServings = (dishId, newServings) => {
-        // Đảm bảo newServings là số nguyên
-        newServings = parseInt(newServings, 10);
-
-        // Kiểm tra tính hợp lệ
-        if (isNaN(newServings) || newServings <= 0) {
-            // Nếu số lượng <= 0, xóa món ăn khỏi giỏ hàng
-            removeItem(null, false, dishId);
-            return;
-        }
-
-        // Cập nhật số lượng phần ăn
-        setBasketItems(prev => ({
-            ...prev,
-            dishes: {
-                ...prev.dishes,
-                [dishId]: {
-                    ...prev.dishes[dishId],
-                    servings: newServings
-                }
-            }
-        }));
-    };
-
-    // Get total number of items
-    const getTotalItemCount = () => {
-        const ingredientCount = basketItems.ingredients.length;
-        let dishIngredientsCount = 0;
-        Object.values(basketItems.dishes).forEach(dish => {
-            dishIngredientsCount += dish.ingredients.length;
-        });
-        return ingredientCount + dishIngredientsCount;
-    };
-
-    // Save cart to server
-    const saveCart = async () => {
+    const handleUpdateDishServings = async (dishId, newServings) => {
         try {
-            await basketService.updateBasket(basketItems);
-            toast.success("Đã lưu giỏ hàng thành công!");
+            let updatedBasketItems = { ...basketItems };
+
+            if (newServings <= 0) {
+                // Nếu số lượng <= 0, xóa món ăn
+                delete updatedBasketItems.dishes[dishId];
+
+                // Cập nhật trạng thái expanded
+                setExpandedSections(prev => {
+                    const updatedExpanded = { ...prev.dishes };
+                    delete updatedExpanded[dishId];
+                    return {
+                        ...prev,
+                        dishes: updatedExpanded
+                    };
+                });
+            } else {
+                // Cập nhật số lượng phần ăn
+                updatedBasketItems.dishes[dishId] = {
+                    ...updatedBasketItems.dishes[dishId],
+                    servings: newServings
+                };
+            }
+
+            // Lưu vào localStorage (không cần gọi API)
+            localStorage.setItem('basketItems', JSON.stringify(updatedBasketItems));
+            // Cập nhật state trong context (không gọi API)
+            await updateBasket(updatedBasketItems);
         } catch (error) {
-            console.error("Error saving basket:", error);
-            toast.error("Không thể lưu giỏ hàng. Vui lòng thử lại sau.");
+            console.error("Error updating dish servings:", error);
+            toast.error("Không thể cập nhật số phần ăn. Vui lòng thử lại sau.");
         }
+    };
+
+    // Lưu giỏ hàng yêu thích
+    const saveFavoriteCart = async () => {
+        try {
+            // Gọi API lưu giỏ hàng yêu thích (cần triển khai API này)
+            // Ví dụ: await basketService.saveFavoriteBasket(basketItems);
+            toast.success("Đã lưu giỏ hàng yêu thích thành công!");
+        } catch (error) {
+            console.error("Error saving favorite basket:", error);
+            toast.error("Không thể lưu giỏ hàng yêu thích. Vui lòng thử lại sau.");
+        }
+    };
+
+    // Hàm tính toán giỏ hàng
+    const handleCalculateCart = async () => {
+        try {
+            setCalculating(true);
+
+            // Đồng bộ giỏ hàng lên server trước khi tính toán
+            await updateBasket();
+
+            // Gọi API tính toán
+            const result = await basketService.calculateBasket();
+
+            // Hiển thị kết quả tính toán trong console
+            console.log("Kết quả tính toán giỏ hàng:", result);
+
+            // Hiển thị thông báo thành công
+            toast.success("Đã tính toán giỏ hàng thành công!");
+
+            // Chuyển hướng đến trang tính toán với kết quả
+            navigate('/calculate', { state: { calculationResult: result } });
+
+            setCalculating(false);
+        } catch (error) {
+            console.error("Error calculating basket:", error);
+            toast.error("Không thể tính toán giỏ hàng. Vui lòng thử lại sau.");
+            setCalculating(false);
+        }
+    };
+
+    // Tính tổng số mục trong giỏ hàng
+    const totalItemCount = () => {
+        if (!basketItems) return 0;
+
+        const ingredientCount = basketItems.ingredients?.length || 0;
+        let dishIngredientsCount = 0;
+
+        if (basketItems.dishes) {
+            Object.values(basketItems.dishes).forEach(dish => {
+                dishIngredientsCount += dish.ingredients?.length || 0;
+            });
+        }
+
+        return ingredientCount + dishIngredientsCount;
     };
 
     return (
@@ -279,13 +280,13 @@ const BasketPage = () => {
             <Navbar />
 
             <div className="container mx-auto px-4 py-8">
-                <BasketHeader saveCart={saveCart} />
+                <BasketHeader saveCart={saveFavoriteCart} />
 
-                {loading ? (
+                {loading || calculating ? (
                     <div className="bg-white p-8 flex justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-600"></div>
                     </div>
-                ) : getTotalItemCount() === 0 ? (
+                ) : totalItemCount() === 0 ? (
                     <div className="bg-white p-8 text-center">
                         <h2 className="text-xl font-medium mb-4">Giỏ hàng trống</h2>
                         <Link to="/ingredients-bank" className="bg-green-600 text-white px-4 py-2 rounded">
@@ -295,36 +296,38 @@ const BasketPage = () => {
                 ) : (
                     <div className="bg-white border border-gray-200 border-t-0">
                         {/* Ingredients Section */}
-                        {basketItems.ingredients.length > 0 && (
+                        {basketItems.ingredients && basketItems.ingredients.length > 0 && (
                             <IngredientSection
                                 ingredients={basketItems.ingredients}
                                 expanded={expandedSections.ingredients}
                                 toggleSection={() => toggleSection('ingredients')}
-                                updateQuantity={updateQuantity}
-                                removeItem={removeItem}
+                                updateQuantity={handleUpdateQuantity}
+                                removeItem={handleRemoveItem}
                             />
                         )}
 
                         {/* Dishes Section */}
-                        {Object.keys(basketItems.dishes).length > 0 && (
+                        {basketItems.dishes && Object.keys(basketItems.dishes).length > 0 && (
                             <DishSection
                                 dishes={basketItems.dishes}
                                 expandedSections={expandedSections}
                                 toggleSection={toggleSection}
-                                updateQuantity={updateQuantity}
-                                removeItem={removeItem}
-                                updateDishServings={updateDishServings}
+                                updateQuantity={handleUpdateQuantity}
+                                removeItem={handleRemoveItem}
+                                updateDishServings={handleUpdateDishServings}
                             />
                         )}
 
                         {/* Checkout Button */}
                         <div className="py-4 flex justify-center border-t border-gray-200 mt-4">
-                            <Link to='/calculate'>
-                                <button className="bg-green-600 text-white px-6 py-2 flex items-center justify-center rounded-md">
-                                    <HiOutlineCalculator className="w-5 h-5 mr-2" />
-                                    Bắt đầu tính toán
-                                </button>
-                            </Link>
+                            <button
+                                onClick={handleCalculateCart}
+                                className="bg-green-600 text-white px-6 py-2 flex items-center justify-center rounded-md"
+                                disabled={calculating}
+                            >
+                                <HiOutlineCalculator className="w-5 h-5 mr-2" />
+                                {calculating ? "Đang tính toán..." : "Bắt đầu tính toán"}
+                            </button>
                         </div>
                     </div>
                 )}

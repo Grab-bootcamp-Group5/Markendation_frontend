@@ -2,7 +2,7 @@ import React from 'react';
 
 const IngredientCategories = ({ activeCategory, setActiveCategory }) => {
     const categories = [
-        "Tất cả", "Fresh Meat", "Grains & Staples"
+        "Tất cả", "Fresh Meat", "Grains & Staples", 'Cereals & Grains', "Snacks", 'Prepared Vegetables', "Cakes"
     ];
 
     return (
