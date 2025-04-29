@@ -14,6 +14,7 @@ import { ModalProvider } from './context/ModalContext';
 import { BasketProvider } from './context/BasketContext';
 
 import CheckoutCalculation from './pages/CheckoutCalculationPage';
+import DistanceCalculator from './pages/DistanceCalculator';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
               <Route path='/login' element={<LoginForm />} />
               <Route path='/register' element={<RegisterForm />} />
               <Route path='/calculate' element={<CheckoutCalculation />} />
+              <Route path='/distance' element={<DistanceCalculator />} />
             </Routes>
             <ToastContainer />
           </div>
