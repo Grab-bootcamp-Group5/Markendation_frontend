@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { getIngredientById, getDishWithIngredients, images } from '../assets/assets';
+import { useBasket } from '../context/BasketContext'; // Thêm import useBasket
 
 const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
     const [quantity, setQuantity] = useState(1);
     const [dishWithIngredients, setDishWithIngredients] = useState(null);
+    const { updateBasket } = useBasket(); // Sử dụng context để cập nhật giỏ hàng
 
     // Reset modal khi mở
     useEffect(() => {
@@ -32,7 +34,8 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
     };
 
     // Xử lý thêm vào giỏ hàng KHI NGƯỜI DÙNG BẤM NÚT
-    const addToCart = () => {
+    // Thêm từ khóa async vào đây
+    const addToCart = async () => {
         // Lấy dữ liệu hiện tại từ localStorage
         const storedBasket = localStorage.getItem('basketItems');
         let basketItems = storedBasket ? JSON.parse(storedBasket) : {
@@ -96,6 +99,15 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
 
         // Lưu vào localStorage
         localStorage.setItem('basketItems', JSON.stringify(basketItems));
+
+        // Đồng bộ giỏ hàng lên server
+        try {
+            await updateBasket(basketItems);
+        } catch (error) {
+            console.error("Lỗi khi đồng bộ giỏ hàng:", error);
+            // Không hiển thị thông báo lỗi để tránh làm phiền người dùng
+            // Giỏ hàng vẫn được lưu vào localStorage và sẽ được đồng bộ sau
+        }
 
         // Thông báo cập nhật
         window.dispatchEvent(new CustomEvent('basketUpdated'));

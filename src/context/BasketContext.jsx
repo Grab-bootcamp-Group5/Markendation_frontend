@@ -11,7 +11,10 @@ export const BasketProvider = ({ children }) => {
         dishes: {}
     });
     const [loading, setLoading] = useState(false);
+    const [syncStatus, setSyncStatus] = useState('synced'); // 'synced', 'pending', 'error'
+    const [syncQueue, setSyncQueue] = useState([]); // Hàng đợi các thao tác cần đồng bộ
 
+    // Khôi phục giỏ hàng từ localStorage khi khởi tạo
     useEffect(() => {
         const storedBasket = localStorage.getItem('basketItems');
         if (storedBasket) {
@@ -50,11 +53,39 @@ export const BasketProvider = ({ children }) => {
         }
     }, []);
 
+    // Cập nhật localStorage mỗi khi basketItems thay đổi
     useEffect(() => {
         if (basketItems.ingredients.length > 0 || Object.keys(basketItems.dishes).length > 0) {
             localStorage.setItem('basketItems', JSON.stringify(basketItems));
         }
     }, [basketItems]);
+
+    // Xử lý hàng đợi đồng bộ
+    useEffect(() => {
+        const processSyncQueue = async () => {
+            if (syncQueue.length > 0 && syncStatus !== 'pending') {
+                setSyncStatus('pending');
+
+                try {
+                    // Lấy giỏ hàng hiện tại và đồng bộ với server
+                    await basketService.updateBasket(basketItems);
+                    setSyncStatus('synced');
+                    setSyncQueue([]); // Xóa hàng đợi sau khi đồng bộ thành công
+                } catch (error) {
+                    console.error("Failed to sync basket with server:", error);
+                    setSyncStatus('error');
+                    // Giữ lại hàng đợi để thử lại sau
+                }
+            }
+        };
+
+        processSyncQueue();
+    }, [syncQueue, syncStatus, basketItems]);
+
+    // Hàm để thêm vào hàng đợi đồng bộ
+    const queueSync = () => {
+        setSyncQueue(prev => [...prev, Date.now()]);
+    };
 
     const addIngredient = async (ingredientData) => {
         try {
@@ -91,6 +122,10 @@ export const BasketProvider = ({ children }) => {
             }
 
             setBasketItems(updatedBasketItems);
+
+            // Thêm vào hàng đợi đồng bộ
+            queueSync();
+
             setLoading(false);
             return processedIngredientData;
         } catch (error) {
@@ -139,6 +174,10 @@ export const BasketProvider = ({ children }) => {
             }
 
             setBasketItems(updatedBasketItems);
+
+            // Thêm vào hàng đợi đồng bộ
+            queueSync();
+
             setLoading(false);
             return processedDishData;
         } catch (error) {
@@ -158,6 +197,10 @@ export const BasketProvider = ({ children }) => {
             };
 
             setBasketItems(updatedBasketItems);
+
+            // Thêm vào hàng đợi đồng bộ
+            queueSync();
+
             setLoading(false);
             return true;
         } catch (error) {
@@ -180,6 +223,10 @@ export const BasketProvider = ({ children }) => {
             };
 
             setBasketItems(updatedBasketItems);
+
+            // Thêm vào hàng đợi đồng bộ
+            queueSync();
+
             setLoading(false);
             return true;
         } catch (error) {
@@ -198,16 +245,25 @@ export const BasketProvider = ({ children }) => {
             if (newBasketItems) {
                 setBasketItems(newBasketItems);
                 localStorage.setItem('basketItems', JSON.stringify(newBasketItems));
+
+                // Thêm vào hàng đợi đồng bộ
+                queueSync();
+
                 setLoading(false);
                 return true;
             }
 
             // Gọi API với basketItems hiện tại - basketService sẽ xử lý chuyển đổi định dạng
+            setSyncStatus('pending');
             const result = await basketService.updateBasket(basketItems);
+            setSyncStatus('synced');
+            setSyncQueue([]); // Xóa hàng đợi
+
             setLoading(false);
             return result;
         } catch (error) {
             console.error("Error updating basket:", error);
+            setSyncStatus('error');
             setLoading(false);
             return false;
         }
@@ -228,10 +284,16 @@ export const BasketProvider = ({ children }) => {
             // Xóa khỏi localStorage
             localStorage.removeItem('basketItems');
 
+            // Đồng bộ giỏ hàng trống với server
+            const result = await basketService.updateBasket(emptyBasket);
+            setSyncStatus('synced');
+            setSyncQueue([]);
+
             setLoading(false);
-            return true;
+            return result;
         } catch (error) {
             console.error("Error clearing basket:", error);
+            setSyncStatus('error');
             setLoading(false);
             return false;
         }
@@ -254,7 +316,8 @@ export const BasketProvider = ({ children }) => {
                 removeDish,
                 updateBasket,
                 clearBasket,
-                getTotalItemCount
+                getTotalItemCount,
+                syncStatus // Thêm trạng thái đồng bộ để UI có thể hiển thị
             }}
         >
             {children}

@@ -7,40 +7,11 @@ import { useBasket } from '../context/BasketContext';
 import { toast } from 'react-toastify';
 
 const Header = ({ basketCount }) => {
-    const [itemCount, setItemCount] = useState(0);
     const [userLocation, setUserLocation] = useState(null);
     // Sử dụng BasketContext để cập nhật giỏ hàng
-    const { updateBasket, basketItems } = useBasket();
+    const { updateBasket, basketItems, syncStatus, getTotalItemCount } = useBasket();
 
     useEffect(() => {
-        // Load initial basket count
-        const getBasketCount = () => {
-            const storedBasket = localStorage.getItem('basketItems');
-            if (!storedBasket) return 0;
-
-            try {
-                const basketItems = JSON.parse(storedBasket);
-
-                const ingredientCount = basketItems.ingredients?.reduce((total, item) => total + 1, 0) || 0;
-
-                let dishIngredientCount = 0;
-                Object.values(basketItems.dishes || {}).forEach(dish => {
-                    dishIngredientCount += dish.ingredients.reduce((total, item) => total + 1, 0);
-                });
-
-                return ingredientCount + dishIngredientCount;
-            } catch (error) {
-                console.error('Error parsing basket items:', error);
-                return 0;
-            }
-        };
-
-        if (basketCount !== undefined) {
-            setItemCount(basketCount);
-        } else {
-            setItemCount(getBasketCount());
-        }
-
         // Load saved location from localStorage if available
         const loadSavedLocation = () => {
             try {
@@ -67,25 +38,19 @@ const Header = ({ basketCount }) => {
         loadSavedLocation();
 
         // Set up event listeners
-        const handleBasketUpdate = () => {
-            setItemCount(getBasketCount());
-        };
-
         const handleLocationUpdate = (event) => {
             if (event.detail) {
                 setUserLocation(event.detail);
             }
         };
 
-        window.addEventListener('basketUpdated', handleBasketUpdate);
         window.addEventListener('locationUpdated', handleLocationUpdate);
 
         // Clean up
         return () => {
-            window.removeEventListener('basketUpdated', handleBasketUpdate);
             window.removeEventListener('locationUpdated', handleLocationUpdate);
         };
-    }, [basketCount]);
+    }, []);
 
     const handleLocationChange = (location) => {
         if (!location) return;
@@ -93,7 +58,7 @@ const Header = ({ basketCount }) => {
     };
 
     // Hàm xử lý cập nhật giỏ hàng lên server
-    const handleUpdateBasket = async () => {
+    const handleForceSync = async () => {
         try {
             const result = await updateBasket();
             if (result) {
@@ -105,6 +70,33 @@ const Header = ({ basketCount }) => {
             console.error("Error updating basket:", error);
             toast.error("Không thể cập nhật giỏ hàng. Vui lòng thử lại sau.");
         }
+    };
+
+    // Hiển thị biểu tượng trạng thái đồng bộ
+    const renderSyncIcon = () => {
+        if (syncStatus === 'pending') {
+            return (
+                <div className="animate-spin h-4 w-4 border-t-2 border-b-2 border-gray-600 rounded-full"></div>
+            );
+        } else if (syncStatus === 'error') {
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            );
+        } else {
+            return (
+                <MdOutlineFileDownload className="h-5 w-5 text-gray-600" />
+            );
+        }
+    };
+
+    // Tính tổng số sản phẩm trong giỏ hàng
+    const getItemCount = () => {
+        if (basketCount !== undefined) {
+            return basketCount;
+        }
+        return getTotalItemCount();
     };
 
     if (!userLocation) {
@@ -123,16 +115,17 @@ const Header = ({ basketCount }) => {
             <div className="flex items-center space-x-4">
                 <Link to="/basket" className="flex items-center bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
                     <img src={cartIcon} alt="Cart" className="h-7 w-7 mr-2" />
-                    <span className="font-bold mr-1">{itemCount}</span>
+                    <span className="font-bold mr-1">{getItemCount()}</span>
                     <span>sản phẩm</span>
                 </Link>
 
                 <button
-                    onClick={handleUpdateBasket}
-                    className="border border-gray-200 p-2 rounded hover:bg-gray-50 transition-colors"
-                    title="Cập nhật giỏ hàng"
+                    onClick={handleForceSync}
+                    className={`border border-gray-200 p-2 rounded hover:bg-gray-50 transition-colors ${syncStatus === 'pending' ? 'cursor-wait' : ''}`}
+                    title={syncStatus === 'synced' ? 'Giỏ hàng đã đồng bộ' : syncStatus === 'pending' ? 'Đang đồng bộ...' : 'Đồng bộ giỏ hàng'}
+                    disabled={syncStatus === 'pending'}
                 >
-                    <MdOutlineFileDownload className="h-5 w-5 text-gray-600" />
+                    {renderSyncIcon()}
                 </button>
             </div>
         </header>

@@ -35,7 +35,7 @@ const ProductCard = ({ id, vietnameseName, name, unit, image, category }) => {
                 id,
                 vietnameseName,
                 name,
-                unit: unit || 'g',
+                unit: unit,
                 image,
                 category,
                 quantity: 1  // Mặc định số lượng là 1

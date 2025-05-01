@@ -19,6 +19,7 @@ const BasketPage = () => {
         basketItems,
         loading,
         updateBasket,
+        syncStatus,
         removeIngredient,
         removeDish,
         getTotalItemCount
@@ -100,9 +101,7 @@ const BasketPage = () => {
                 });
             }
 
-            // Lưu vào localStorage (không cần gọi API)
-            localStorage.setItem('basketItems', JSON.stringify(updatedBasketItems));
-            // Cập nhật state trong context (không gọi API)
+            // Cập nhật state trong context (tự động đồng bộ với server)
             await updateBasket(updatedBasketItems);
         } catch (error) {
             console.error("Error updating quantity:", error);
@@ -113,9 +112,10 @@ const BasketPage = () => {
     // Hàm xóa item
     const handleRemoveItem = async (id, isDishIngredient = false, dishId = null) => {
         try {
+            let updatedBasketItems = { ...basketItems };
+
             if (isDishIngredient && dishId) {
                 // Xóa nguyên liệu trong món ăn
-                let updatedBasketItems = { ...basketItems };
                 if (updatedBasketItems.dishes[dishId]) {
                     const updatedIngredients = updatedBasketItems.dishes[dishId].ingredients.filter(
                         item => item.id !== id
@@ -142,14 +142,11 @@ const BasketPage = () => {
                         };
                     }
 
-                    // Lưu vào localStorage (không cần gọi API)
-                    localStorage.setItem('basketItems', JSON.stringify(updatedBasketItems));
-                    // Cập nhật state trong context (không gọi API)
+                    // Cập nhật state trong context (tự động đồng bộ với server)
                     await updateBasket(updatedBasketItems);
                 }
             } else if (dishId) {
                 // Xóa toàn bộ món ăn
-                let updatedBasketItems = { ...basketItems };
                 delete updatedBasketItems.dishes[dishId];
 
                 // Cập nhật trạng thái expanded
@@ -162,19 +159,11 @@ const BasketPage = () => {
                     };
                 });
 
-                // Lưu vào localStorage (không cần gọi API)
-                localStorage.setItem('basketItems', JSON.stringify(updatedBasketItems));
-                // Cập nhật state trong context (không gọi API)
+                // Cập nhật state trong context (tự động đồng bộ với server)
                 await updateBasket(updatedBasketItems);
             } else {
-                // Xóa nguyên liệu độc lập
-                let updatedBasketItems = { ...basketItems };
-                updatedBasketItems.ingredients = updatedBasketItems.ingredients.filter(item => item.id !== id);
-
-                // Lưu vào localStorage (không cần gọi API)
-                localStorage.setItem('basketItems', JSON.stringify(updatedBasketItems));
-                // Cập nhật state trong context (không gọi API)
-                await updateBasket(updatedBasketItems);
+                // Sử dụng hàm removeIngredient từ context
+                await removeIngredient(id);
             }
         } catch (error) {
             console.error("Error removing item:", error);
@@ -208,9 +197,7 @@ const BasketPage = () => {
                 };
             }
 
-            // Lưu vào localStorage (không cần gọi API)
-            localStorage.setItem('basketItems', JSON.stringify(updatedBasketItems));
-            // Cập nhật state trong context (không gọi API)
+            // Cập nhật state trong context (tự động đồng bộ với server)
             await updateBasket(updatedBasketItems);
         } catch (error) {
             console.error("Error updating dish servings:", error);
@@ -221,6 +208,11 @@ const BasketPage = () => {
     // Lưu giỏ hàng yêu thích
     const saveFavoriteCart = async () => {
         try {
+            // Đảm bảo giỏ hàng đã được đồng bộ với server trước khi lưu
+            if (syncStatus !== 'synced') {
+                await updateBasket();
+            }
+
             // Gọi API lưu giỏ hàng yêu thích (cần triển khai API này)
             // Ví dụ: await basketService.saveFavoriteBasket(basketItems);
             toast.success("Đã lưu giỏ hàng yêu thích thành công!");
@@ -235,14 +227,17 @@ const BasketPage = () => {
         try {
             setCalculating(true);
 
-            // Đồng bộ giỏ hàng lên server trước khi tính toán
-            await updateBasket();
+            // Đảm bảo giỏ hàng đã được đồng bộ với server trước khi tính toán
+            if (syncStatus !== 'synced') {
+                await updateBasket();
+            }
 
             // Gọi API tính toán
             const result = await basketService.calculateBasket();
 
             // Hiển thị kết quả tính toán trong console
             console.log("Kết quả tính toán giỏ hàng:", result);
+            localStorage.setItem('basket result:', JSON.stringify(result));
 
             // Hiển thị thông báo thành công
             toast.success("Đã tính toán giỏ hàng thành công!");
@@ -274,6 +269,36 @@ const BasketPage = () => {
         return ingredientCount + dishIngredientsCount;
     };
 
+    // Hiển thị trạng thái đồng bộ
+    const renderSyncStatus = () => {
+        if (syncStatus === 'pending') {
+            return (
+                <div className="text-yellow-600 text-xs flex items-center">
+                    <div className="animate-spin h-3 w-3 border-t-2 border-b-2 border-yellow-600 rounded-full mr-1"></div>
+                    Đang đồng bộ...
+                </div>
+            );
+        } else if (syncStatus === 'error') {
+            return (
+                <div className="text-red-600 text-xs flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Đồng bộ thất bại
+                </div>
+            );
+        } else {
+            return (
+                <div className="text-green-600 text-xs flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Đã đồng bộ
+                </div>
+            );
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
             <Header />
@@ -281,6 +306,11 @@ const BasketPage = () => {
 
             <div className="container mx-auto px-4 py-8">
                 <BasketHeader saveCart={saveFavoriteCart} />
+
+                {/* Hiển thị trạng thái đồng bộ */}
+                <div className="mb-2 flex justify-end">
+                    {renderSyncStatus()}
+                </div>
 
                 {loading || calculating ? (
                     <div className="bg-white p-8 flex justify-center">
@@ -323,7 +353,7 @@ const BasketPage = () => {
                             <button
                                 onClick={handleCalculateCart}
                                 className="bg-green-600 text-white px-6 py-2 flex items-center justify-center rounded-md"
-                                disabled={calculating}
+                                disabled={calculating || syncStatus === 'pending'}
                             >
                                 <HiOutlineCalculator className="w-5 h-5 mr-2" />
                                 {calculating ? "Đang tính toán..." : "Bắt đầu tính toán"}
