@@ -13,13 +13,21 @@ export const ingredientService = {
         }
     },
 
-    // Get a paginated list of ingredients
-    getIngredients: async (pageNo = 0, pageSize = 30) => {
+    getIngredients: async (pageNo = 0, pageSize = 32) => {
         try {
             const response = await axiosPublic.get(`/public/ingredients?pageSize=${pageSize}&pageNo=${pageNo}`);
             return response.data;
         } catch (error) {
             console.error(`Error fetching ingredients (page ${pageNo}):`, error);
+            throw error;
+        }
+    },
+    getTotalIngredientSize: async () => {
+        try {
+            const response = await axiosPublic.get('/public/ingredients/totalSize');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching total ingredient count:', error);
             throw error;
         }
     }

@@ -12,45 +12,39 @@ const DishesPage = () => {
     const [error, setError] = useState(null);
     const [filteredDishes, setFilteredDishes] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
-    const [hasMore, setHasMore] = useState(true);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalDishes, setTotalDishes] = useState(0);
     const pageSize = 12;
 
-    // Fetch dishes from API
-    const fetchDishes = async (page = 0) => {
-        try {
+    useEffect(() => {
+        const fetchDishesData = async () => {
             setLoading(true);
-            const response = await dishService.getDishes(page, pageSize);
+            try {
+                // Fetch total count first
+                const totalCount = await dishService.getTotalDishSize();
+                setTotalDishes(totalCount);
+                setTotalPages(Math.ceil(totalCount / pageSize));
 
-            if (Array.isArray(response) && response.length > 0) {
-                if (page === 0) {
+                const response = await dishService.getDishes(currentPage, pageSize);
+
+                if (response) {
                     setDishes(response);
                     setFilteredDishes(response);
-                } else {
-                    const newDishes = [...dishes, ...response];
-                    setDishes(newDishes);
-                    setFilteredDishes(newDishes);
                 }
-
-                if (response.length < pageSize) {
-                    setHasMore(false);
-                }
-            } else if (page === 0) {
-                setDishes([]);
-                setFilteredDishes([]);
-                setHasMore(false);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error details:", error);
+                setError("Có lỗi xảy ra khi tải dữ liệu món ăn. Vui lòng thử lại sau.");
+                setLoading(false);
             }
+        };
 
-            setLoading(false);
-        } catch (err) {
-            console.error("Error fetching dishes:", err);
-            setError("Có lỗi xảy ra khi tải dữ liệu món ăn. Vui lòng thử lại sau.");
-            setLoading(false);
-        }
-    };
+        fetchDishesData();
+    }, [currentPage]);
 
     useEffect(() => {
-        fetchDishes(0);
-    }, []);
+        setFilteredDishes(dishes);
+    }, [dishes]);
 
     const handleSearch = (searchTerm) => {
         if (!searchTerm) {
@@ -66,12 +60,97 @@ const DishesPage = () => {
         setFilteredDishes(filtered);
     };
 
-    const loadMoreDishes = () => {
-        if (!loading && hasMore) {
-            const nextPage = currentPage + 1;
-            setCurrentPage(nextPage);
-            fetchDishes(nextPage);
+    const handlePageChange = (newPage) => {
+        window.scrollTo(0, 0);
+        setCurrentPage(newPage);
+    };
+
+    const renderPagination = () => {
+        if (totalPages <= 1) return null;
+
+        let startPage = Math.max(0, currentPage - 2);
+        let endPage = Math.min(totalPages - 1, currentPage + 2);
+
+        if (endPage - startPage < 4) {
+            if (startPage === 0) {
+                endPage = Math.min(4, totalPages - 1);
+            } else if (endPage === totalPages - 1) {
+                startPage = Math.max(0, totalPages - 5);
+            }
         }
+
+        const pages = [];
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(i);
+        }
+
+        return (
+            <div className="flex justify-center mt-8">
+                <div className="flex items-center space-x-2">
+                    {/* First page button */}
+                    <button
+                        onClick={() => handlePageChange(0)}
+                        disabled={currentPage === 0}
+                        className={`px-3 py-1 rounded-md ${currentPage === 0
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : 'bg-white text-gray-700 hover:bg-gray-100'
+                            } border border-gray-300`}
+                    >
+                        «
+                    </button>
+
+                    {/* Previous page button */}
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 0}
+                        className={`px-3 py-1 rounded-md ${currentPage === 0
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : 'bg-white text-gray-700 hover:bg-gray-100'
+                            } border border-gray-300`}
+                    >
+                        ‹
+                    </button>
+
+                    {/* Page numbers */}
+                    {pages.map(page => (
+                        <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`px-3 py-1 rounded-md ${currentPage === page
+                                ? 'bg-orange-500 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                                } border border-gray-300`}
+                        >
+                            {page + 1}
+                        </button>
+                    ))}
+
+                    {/* Next page button */}
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages - 1}
+                        className={`px-3 py-1 rounded-md ${currentPage === totalPages - 1
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : 'bg-white text-gray-700 hover:bg-gray-100'
+                            } border border-gray-300`}
+                    >
+                        ›
+                    </button>
+
+                    {/* Last page button */}
+                    <button
+                        onClick={() => handlePageChange(totalPages - 1)}
+                        disabled={currentPage === totalPages - 1}
+                        className={`px-3 py-1 rounded-md ${currentPage === totalPages - 1
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : 'bg-white text-gray-700 hover:bg-gray-100'
+                            } border border-gray-300`}
+                    >
+                        »
+                    </button>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -89,24 +168,35 @@ const DishesPage = () => {
                         </div>
                     )}
 
-                    {/* Dishes grid */}
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                        Danh sách món ăn
-                    </h2>
 
-                    {loading && dishes.length === 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-6">
-                            {[1, 2, 3, 4, 5, 6].map((index) => (
-                                <div key={index} className="w-full h-80 bg-gray-200 animate-pulse rounded-lg"></div>
+
+                    {/* Dishes grid */}
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold text-gray-800">
+                            Tất Cả Món Ăn
+                        </h2>
+
+                        {!loading && (
+                            <div className="text-sm text-gray-600">
+                                Hiển thị {filteredDishes.length} món ăn
+                                {` (trang ${currentPage + 1}/${totalPages})`}
+                            </div>
+                        )}
+                    </div>
+
+                    {loading ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
+                                <div key={index} className="w-full h-64 bg-gray-200 animate-pulse rounded-lg"></div>
                             ))}
                         </div>
                     ) : filteredDishes.length > 0 ? (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {filteredDishes.map((dish) => (
                                     <DishCard
-                                        key={dish.id || dish.name}
-                                        id={dish.id || dish.name}
+                                        key={dish.id}
+                                        id={dish.id}
                                         image={dish.imageUrl || dish.image}
                                         name={dish.vietnameseName || dish.name}
                                         ingredientCount={dish.ingredients?.length || 0}
@@ -115,28 +205,7 @@ const DishesPage = () => {
                                 ))}
                             </div>
 
-                            {/* Load more button */}
-                            {hasMore && !error && (
-                                <div className="flex justify-center mt-8">
-                                    <button
-                                        onClick={loadMoreDishes}
-                                        className="bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-6 rounded-full transition duration-300"
-                                        disabled={loading}
-                                    >
-                                        {loading ? (
-                                            <span className="flex items-center">
-                                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                                Đang tải...
-                                            </span>
-                                        ) : (
-                                            "Xem thêm món ăn"
-                                        )}
-                                    </button>
-                                </div>
-                            )}
+                            {renderPagination()}
                         </>
                     ) : (
                         <div className="text-center py-12">
