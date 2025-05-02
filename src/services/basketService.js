@@ -27,7 +27,6 @@ const formatBasketData = (basketItems) => {
     return formattedBasketItems;
 };
 
-// Tạo một debounce function để giảm số lần gọi API
 const debounce = (func, delay) => {
     let timeoutId;
     return function (...args) {
@@ -40,13 +39,10 @@ const debounce = (func, delay) => {
     };
 };
 
-// Khởi tạo biến để lưu Promise cuối cùng
 let lastUpdatePromise = Promise.resolve();
 
 export const basketService = {
-    // Cập nhật giỏ hàng
     updateBasket: async (basketItems) => {
-        // Đảm bảo các thao tác cập nhật được xử lý theo thứ tự
         lastUpdatePromise = lastUpdatePromise.then(async () => {
             try {
                 const formattedBasketItems = formatBasketData(basketItems);
@@ -61,7 +57,6 @@ export const basketService = {
         return lastUpdatePromise;
     },
 
-    // Tạo một phiên bản updateBasket bị debounce để sử dụng cho các thao tác thay đổi nhanh
     debouncedUpdateBasket: debounce(async (basketItems) => {
         try {
             const formattedBasketItems = formatBasketData(basketItems);
@@ -71,9 +66,8 @@ export const basketService = {
             console.error("Error updating basket:", error);
             throw error;
         }
-    }, 800), // 800ms delay
+    }, 800),
 
-    // Tính toán giỏ hàng
     calculateBasket: async () => {
         try {
             const response = await axiosPrivate.get('/basket/calculate');
@@ -84,10 +78,9 @@ export const basketService = {
         }
     },
 
-    // Lưu giỏ hàng yêu thích
     saveFavoriteBasket: async () => {
         try {
-            const response = await axiosPrivate.post('/basket/save-favorite');
+            const response = await axiosPrivate.post('/basket/save');
             return response.data;
         } catch (error) {
             console.error("Error saving favorite basket:", error);
@@ -95,7 +88,6 @@ export const basketService = {
         }
     },
 
-    // Lấy giỏ hàng từ server
     getBasket: async () => {
         try {
             const response = await axiosPrivate.get('/basket');

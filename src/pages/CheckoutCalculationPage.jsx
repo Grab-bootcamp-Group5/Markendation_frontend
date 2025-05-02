@@ -78,13 +78,10 @@ const CheckoutCalculation = () => {
         const formattedStores = storeData.map(storeItem => {
             const storeInfo = storeItem.store || {};
 
-            // Process products data
             const products = Array.isArray(storeItem.products)
                 ? storeItem.products.map(product => {
-                    // Handle different API response structures
                     const productData = product.product || product;
 
-                    // Extract more product details
                     return {
                         id: productData.id || `product-${Math.random().toString(36).substring(2, 9)}`,
                         name: productData.name || "Sản phẩm",
@@ -101,13 +98,11 @@ const CheckoutCalculation = () => {
                     };
                 })
                 : [];
-            // Calculate total cost if not provided
             let totalCost = storeItem.totalCost || 0;
             if (totalCost === 0 && products.length > 0) {
                 totalCost = products.reduce((sum, product) => sum + (product.cost || 0), 0);
             }
 
-            // Group products by category for better organization
             const productsByCategory = {};
             products.forEach(product => {
                 const category = product.category || "Khác";
@@ -139,7 +134,6 @@ const CheckoutCalculation = () => {
                 chain: storeInfo.chain || ""
             };
         });
-        // Sort stores by rating, then by distance
         formattedStores.sort((a, b) => {
             const ratingA = a.rating || a.stars || 0;
             const ratingB = b.rating || b.stars || 0;
@@ -155,11 +149,9 @@ const CheckoutCalculation = () => {
         setSuggestedStores(formattedStores);
     };
 
-    // Combine ingredients from both individual items and dishes
     const combineIngredients = (basket) => {
         const combined = {};
 
-        // Process individual ingredients
         if (basket.ingredients && basket.ingredients.length > 0) {
             basket.ingredients.forEach(item => {
                 if (!combined[item.id]) {
@@ -174,7 +166,6 @@ const CheckoutCalculation = () => {
             });
         }
 
-        // Process ingredients from dishes
         if (basket.dishes) {
             Object.values(basket.dishes).forEach(dish => {
                 if (dish.ingredients && dish.ingredients.length > 0) {
@@ -195,7 +186,6 @@ const CheckoutCalculation = () => {
             });
         }
 
-        // Convert to array and round quantities
         const combinedArray = Object.values(combined).map(item => ({
             ...item,
             totalQuantity: parseFloat(item.totalQuantity.toFixed(1))
@@ -212,12 +202,10 @@ const CheckoutCalculation = () => {
         return parseFloat(price).toLocaleString('vi-VN');
     };
 
-    // Toggle store details expansion
     const toggleStoreDetails = (storeId) => {
         setExpandedStoreId(expandedStoreId === storeId ? null : storeId);
     };
 
-    // Get detailed information about a specific store's products
     const getStoreProductDetails = (storeId) => {
         const store = suggestedStores.find(s => s.id === storeId);
         if (!store) return null;
@@ -228,7 +216,6 @@ const CheckoutCalculation = () => {
         });
     };
 
-    // Format product name with Vietnamese and English names if available
     const formatProductName = (product) => {
         if (product.name_vi && product.name_en && product.name_vi !== product.name_en) {
             return (
@@ -241,11 +228,9 @@ const CheckoutCalculation = () => {
         return <div className="font-medium">{product.name_vi || product.name}</div>;
     };
 
-    // Render star rating
     const renderRating = (rating) => {
         if (!rating && rating !== 0) return null;
 
-        // Round rating to 1 decimal place
         const roundedRating = parseFloat(rating).toFixed(1);
 
         return (
@@ -264,7 +249,6 @@ const CheckoutCalculation = () => {
         );
     };
 
-    // Format price with thousand separators
     const formatCurrency = (value) => {
         if (value >= 1000000) {
             return `${(value / 1000000).toFixed(2)}tr`;

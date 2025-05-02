@@ -33,7 +33,6 @@ const BasketPage = () => {
 
     const [calculating, setCalculating] = useState(false);
 
-    // Thiết lập trạng thái mở rộng ban đầu cho các món ăn
     useEffect(() => {
         if (!loading && basketItems.dishes) {
             const initialExpandedState = {};
@@ -48,36 +47,21 @@ const BasketPage = () => {
         }
     }, [loading, basketItems.dishes]);
 
-    // Toggle section visibility
     const toggleSection = (section, id = null) => {
         if (section === 'ingredients') {
-            setExpandedSections(prev => ({
-                ...prev,
-                ingredients: !prev.ingredients
-            }));
+            setExpandedSections(prev => ({ ...prev, ingredients: !prev.ingredients }));
         } else if (section === 'foodSection') {
-            setExpandedSections(prev => ({
-                ...prev,
-                foodSection: !prev.foodSection
-            }));
+            setExpandedSections(prev => ({ ...prev, foodSection: !prev.foodSection }));
         } else if (section === 'dish' && id !== null) {
-            setExpandedSections(prev => ({
-                ...prev,
-                dishes: {
-                    ...prev.dishes,
-                    [id]: !prev.dishes[id]
-                }
-            }));
+            setExpandedSections(prev => ({ ...prev, dishes: { ...prev.dishes, [id]: !prev.dishes[id] } }));
         }
     };
 
-    // Hàm cập nhật số lượng nguyên liệu
     const handleUpdateQuantity = async (id, newQuantity, isDishIngredient = false, dishId = null) => {
         try {
             let updatedBasketItems = { ...basketItems };
 
             if (isDishIngredient && dishId) {
-                // Cập nhật số lượng cho nguyên liệu trong món ăn
                 if (updatedBasketItems.dishes[dishId]) {
                     const updatedIngredients = updatedBasketItems.dishes[dishId].ingredients.map(item => {
                         if (item.id === id) {
@@ -92,7 +76,6 @@ const BasketPage = () => {
                     };
                 }
             } else {
-                // Cập nhật số lượng cho nguyên liệu độc lập
                 updatedBasketItems.ingredients = updatedBasketItems.ingredients.map(item => {
                     if (item.id === id) {
                         return { ...item, quantity: newQuantity };
@@ -101,7 +84,6 @@ const BasketPage = () => {
                 });
             }
 
-            // Cập nhật state trong context (tự động đồng bộ với server)
             await updateBasket(updatedBasketItems);
         } catch (error) {
             console.error("Error updating quantity:", error);
@@ -115,17 +97,14 @@ const BasketPage = () => {
             let updatedBasketItems = { ...basketItems };
 
             if (isDishIngredient && dishId) {
-                // Xóa nguyên liệu trong món ăn
                 if (updatedBasketItems.dishes[dishId]) {
                     const updatedIngredients = updatedBasketItems.dishes[dishId].ingredients.filter(
                         item => item.id !== id
                     );
 
                     if (updatedIngredients.length === 0) {
-                        // Nếu không còn nguyên liệu, xóa món ăn
                         delete updatedBasketItems.dishes[dishId];
 
-                        // Cập nhật trạng thái expanded
                         setExpandedSections(prev => {
                             const updatedExpanded = { ...prev.dishes };
                             delete updatedExpanded[dishId];
@@ -135,21 +114,17 @@ const BasketPage = () => {
                             };
                         });
                     } else {
-                        // Cập nhật danh sách nguyên liệu của món ăn
                         updatedBasketItems.dishes[dishId] = {
                             ...updatedBasketItems.dishes[dishId],
                             ingredients: updatedIngredients
                         };
                     }
 
-                    // Cập nhật state trong context (tự động đồng bộ với server)
                     await updateBasket(updatedBasketItems);
                 }
             } else if (dishId) {
-                // Xóa toàn bộ món ăn
                 delete updatedBasketItems.dishes[dishId];
 
-                // Cập nhật trạng thái expanded
                 setExpandedSections(prev => {
                     const updatedExpanded = { ...prev.dishes };
                     delete updatedExpanded[dishId];
@@ -159,10 +134,8 @@ const BasketPage = () => {
                     };
                 });
 
-                // Cập nhật state trong context (tự động đồng bộ với server)
                 await updateBasket(updatedBasketItems);
             } else {
-                // Sử dụng hàm removeIngredient từ context
                 await removeIngredient(id);
             }
         } catch (error) {
@@ -177,10 +150,8 @@ const BasketPage = () => {
             let updatedBasketItems = { ...basketItems };
 
             if (newServings <= 0) {
-                // Nếu số lượng <= 0, xóa món ăn
                 delete updatedBasketItems.dishes[dishId];
 
-                // Cập nhật trạng thái expanded
                 setExpandedSections(prev => {
                     const updatedExpanded = { ...prev.dishes };
                     delete updatedExpanded[dishId];
@@ -190,14 +161,12 @@ const BasketPage = () => {
                     };
                 });
             } else {
-                // Cập nhật số lượng phần ăn
                 updatedBasketItems.dishes[dishId] = {
                     ...updatedBasketItems.dishes[dishId],
                     servings: newServings
                 };
             }
 
-            // Cập nhật state trong context (tự động đồng bộ với server)
             await updateBasket(updatedBasketItems);
         } catch (error) {
             console.error("Error updating dish servings:", error);
@@ -227,22 +196,13 @@ const BasketPage = () => {
         try {
             setCalculating(true);
 
-            // Đảm bảo giỏ hàng đã được đồng bộ với server trước khi tính toán
             if (syncStatus !== 'synced') {
                 await updateBasket();
             }
 
-            // Gọi API tính toán
             const result = await basketService.calculateBasket();
-
-            // Hiển thị kết quả tính toán trong console
-            console.log("Kết quả tính toán giỏ hàng:", result);
-            localStorage.setItem('basket result:', JSON.stringify(result));
-
-            // Hiển thị thông báo thành công
             toast.success("Đã tính toán giỏ hàng thành công!");
 
-            // Chuyển hướng đến trang tính toán với kết quả
             navigate('/calculate', { state: { calculationResult: result } });
 
             setCalculating(false);

@@ -1,14 +1,14 @@
 import axiosPublic from './axiosPublic';
-import axiosPrivate from './axiosPrivate';
 
 export const dishService = {
-    // Lấy thông tin của một dish theo ID
-    getDishById: (id) => {
-        return axiosPublic.get(`/dishes/${id}`);
-    },
 
-    // Lấy danh sách dishes theo trang
-    getDishes: (pageNo = 1, pageSize = 30) => {
-        return axiosPublic.get(`/dishes?pageSize=${pageSize}&pageNo=${pageNo}`);
+    getDishes: async (pageNo = 0, pageSize = 30) => {
+        try {
+            const response = await axiosPublic.get(`public/dishes?pageSize=${pageSize}&pageNo=${pageNo}`);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching dishes (page ${pageNo}):`, error);
+            throw error;
+        }
     }
 };

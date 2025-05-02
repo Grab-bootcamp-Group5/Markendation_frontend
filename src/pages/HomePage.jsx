@@ -1,17 +1,24 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FiSearch, FiChevronRight, FiChevronLeft, FiX } from 'react-icons/fi';
-import { ingredientsList, dishesList, restaurantsList, getDishWithIngredients } from '../assets/assets';
 import ProductCard from '../components/ingredients/ProductCard';
+import DishCard from '../components/DishCard';
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import cartIcon from '../assets/images/cart.png';
 import { useModal } from '../context/ModalContext';
+import { ingredientService } from '../services/ingredientService';
+import { dishService } from '../services/dishService';
+import { restaurantsList } from '../assets/assets';
 
 const HomePage = () => {
-    const ingredients = ingredientsList;
-    const dishes = dishesList;
+    const [ingredients, setIngredients] = useState([]);
+    const [dishes, setDishes] = useState([]);
     const restaurants = restaurantsList;
+    const [loadingIngredients, setLoadingIngredients] = useState(true);
+    const [loadingDishes, setLoadingDishes] = useState(true);
+    const [errorIngredients, setErrorIngredients] = useState(null);
+    const [errorDishes, setErrorDishes] = useState(null);
     const { openModal } = useModal();
 
     const ingredientsRef = useRef(null);
@@ -20,6 +27,52 @@ const HomePage = () => {
     const [ingredientsScroll, setIngredientsScroll] = useState({ left: false, right: true });
     const [dishesScroll, setDishesScroll] = useState({ left: false, right: true });
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Fetch ingredients from API
+    useEffect(() => {
+        const fetchIngredients = async () => {
+            try {
+                setLoadingIngredients(true);
+                const response = await ingredientService.getIngredients(0, 12);
+
+                if (Array.isArray(response)) {
+                    setIngredients(response);
+                } else {
+                    setIngredients([]);
+                }
+                setLoadingIngredients(false);
+            } catch (error) {
+                console.error("Error fetching ingredients:", error);
+                setErrorIngredients("Không thể tải danh sách nguyên liệu");
+                setLoadingIngredients(false);
+            }
+        };
+
+        fetchIngredients();
+    }, []);
+
+    // Fetch dishes from API
+    useEffect(() => {
+        const fetchDishes = async () => {
+            try {
+                setLoadingDishes(true);
+                const response = await dishService.getDishes(0, 12);
+
+                if (Array.isArray(response)) {
+                    setDishes(response);
+                } else {
+                    setDishes([]);
+                }
+                setLoadingDishes(false);
+            } catch (error) {
+                console.error("Error fetching dishes:", error);
+                setErrorDishes("Không thể tải danh sách món ăn");
+                setLoadingDishes(false);
+            }
+        };
+
+        fetchDishes();
+    }, []);
 
     const scrollIngredientsLeft = () => {
         if (ingredientsRef.current) {
@@ -105,8 +158,10 @@ const HomePage = () => {
         reader.readAsDataURL(file);
     };
 
-    const handleResetImage = () => { setSelectedImage(null); setPreviewUrl(''); };
-
+    const handleResetImage = () => {
+        setSelectedImage(null);
+        setPreviewUrl('');
+    };
 
     const handleUpload = async () => {
         if (!selectedImage) {
@@ -117,19 +172,21 @@ const HomePage = () => {
         setIsUploading(true);
 
         try {
-            // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // For demo purposes, just show some random ingredients
             const randomIngredients = [];
-            const numIngredients = Math.floor(Math.random() * 3) + 2; // 2-4 random ingredients
+            if (ingredients.length > 0) {
+                const numIngredients = Math.floor(Math.random() * 3) + 2; // 2-4 random ingredients
 
-            for (let i = 0; i < numIngredients; i++) {
-                const randomIndex = Math.floor(Math.random() * ingredients.length);
-                randomIngredients.push(ingredients[randomIndex]);
+                for (let i = 0; i < numIngredients; i++) {
+                    const randomIndex = Math.floor(Math.random() * ingredients.length);
+                    randomIngredients.push(ingredients[randomIndex]);
+                }
+
+                openModal('ingredients', randomIngredients);
+            } else {
+                throw new Error('No ingredients available');
             }
-
-            openModal('ingredients', randomIngredients);
 
             setSelectedImage(null);
             setPreviewUrl('');
@@ -151,27 +208,30 @@ const HomePage = () => {
 
         setSearchQuery(searchInput);
 
-        // check if the search matches any dish names
+        // Check if the search matches any dish names
         const matchedDish = dishes.find(dish =>
-            dish.name.toLowerCase().includes(searchInput.toLowerCase())
+            dish.name?.toLowerCase().includes(searchInput.toLowerCase()) ||
+            dish.vietnameseName?.toLowerCase().includes(searchInput.toLowerCase())
         );
 
         if (matchedDish) {
-            const dishWithIngredients = getDishWithIngredients(matchedDish.id);
-            if (dishWithIngredients) {
-                openModal('dish', dishWithIngredients);
-            }
+            // Use the dish with ingredients
+            openModal('dish', matchedDish);
         } else {
-            // Simulate API call
-            const randomIngredients = [];
-            const numIngredients = Math.floor(Math.random() * 3) + 2; // 2-4 random ingredients
+            // Simulate ingredient search results
+            if (ingredients.length > 0) {
+                const randomIngredients = [];
+                const numIngredients = Math.floor(Math.random() * 3) + 2; // 2-4 random ingredients
 
-            for (let i = 0; i < numIngredients; i++) {
-                const randomIndex = Math.floor(Math.random() * ingredients.length);
-                randomIngredients.push(ingredients[randomIndex]);
+                for (let i = 0; i < numIngredients; i++) {
+                    const randomIndex = Math.floor(Math.random() * ingredients.length);
+                    randomIngredients.push(ingredients[randomIndex]);
+                }
+
+                openModal('search', randomIngredients, searchInput);
+            } else {
+                alert('Không tìm thấy kết quả phù hợp.');
             }
-
-            openModal('search', randomIngredients, searchInput);
         }
 
         // Clear search input
@@ -187,94 +247,110 @@ const HomePage = () => {
                 {/* Ingredients Section */}
                 <section className="mb-8">
                     <h2 className="text-2xl font-bold text-gray-800">Danh sách thực phẩm</h2>
-                    <div className="relative">
-                        <div
-                            ref={ingredientsRef}
-                            className="flex space-x-4 overflow-hidden pb-4"
-                            onScroll={() => handleScroll(ingredientsRef, setIngredientsScroll)}
-                        >
-                            {ingredients.map((ingredient) => (
-                                <div key={ingredient.id} className="flex-shrink-0 w-64">
-                                    <ProductCard
-                                        id={ingredient.id}
-                                        vietnameseName={ingredient.vietnameseName}
-                                        name={ingredient.name}
-                                        unit={ingredient.unit}
-                                        image={ingredient.image}
-                                        category={ingredient.category}
-                                    />
-                                </div>
+                    {errorIngredients ? (
+                        <div className="bg-red-100 text-red-700 p-4 rounded-lg mt-4">
+                            {errorIngredients}
+                        </div>
+                    ) : loadingIngredients ? (
+                        <div className="flex space-x-4 overflow-hidden pb-4 mt-4">
+                            {[...Array(4)].map((_, index) => (
+                                <div key={index} className="flex-shrink-0 w-64 h-64 bg-gray-200 animate-pulse rounded-lg"></div>
                             ))}
                         </div>
-
-                        {ingredientsScroll.left && (
-                            <button
-                                onClick={scrollIngredientsLeft}
-                                className="absolute top-1/2 -left-4 transform -translate-y-1/2 bg-white w-8 h-8 rounded-full shadow-md flex items-center justify-center z-10 hover:bg-gray-100"
+                    ) : (
+                        <div className="relative">
+                            <div
+                                ref={ingredientsRef}
+                                className="flex space-x-4 overflow-hidden pb-4"
+                                onScroll={() => handleScroll(ingredientsRef, setIngredientsScroll)}
                             >
-                                <FiChevronLeft className="text-gray-600" />
-                            </button>
-                        )}
+                                {ingredients.map((ingredient) => (
+                                    <div key={ingredient.id || ingredient.name} className="flex-shrink-0 w-64">
+                                        <ProductCard
+                                            id={ingredient.id}
+                                            vietnameseName={ingredient.vietnameseName}
+                                            name={ingredient.name}
+                                            unit={ingredient.unit}
+                                            image={ingredient.imageUrl || ingredient.image}
+                                            category={ingredient.category}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
 
-                        {ingredientsScroll.right && (
-                            <button
-                                onClick={scrollIngredientsRight}
-                                className="absolute top-1/2 -right-4 transform -translate-y-1/2 bg-white w-8 h-8 rounded-full shadow-md flex items-center justify-center z-10 hover:bg-gray-100"
-                            >
-                                <FiChevronRight className="text-gray-600" />
-                            </button>
-                        )}
-                    </div>
+                            {ingredientsScroll.left && (
+                                <button
+                                    onClick={scrollIngredientsLeft}
+                                    className="absolute top-1/2 -left-4 transform -translate-y-1/2 bg-white w-8 h-8 rounded-full shadow-md flex items-center justify-center z-10 hover:bg-gray-100"
+                                >
+                                    <FiChevronLeft className="text-gray-600" />
+                                </button>
+                            )}
+
+                            {ingredientsScroll.right && (
+                                <button
+                                    onClick={scrollIngredientsRight}
+                                    className="absolute top-1/2 -right-4 transform -translate-y-1/2 bg-white w-8 h-8 rounded-full shadow-md flex items-center justify-center z-10 hover:bg-gray-100"
+                                >
+                                    <FiChevronRight className="text-gray-600" />
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </section>
 
                 {/* Dishes Section */}
                 <section className="mb-8">
                     <h2 className="text-2xl font-bold text-gray-800">Danh sách món ăn</h2>
-                    <div className="relative">
-                        <div
-                            ref={dishesRef}
-                            className="flex space-x-4 overflow-hidden pb-4"
-                            onScroll={() => handleScroll(dishesRef, setDishesScroll)}
-                        >
-                            {dishes.map((dish) => {
-                                const dishWithIngredients = getDishWithIngredients(dish.id);
-                                return (
-                                    <div key={dish.id} className="flex-shrink-0 w-64">
-                                        <div
-                                            className="cursor-pointer"
-                                            onClick={() => openModal('dish', { id: dish.id, name: dish.name, image: dish.image })}
-                                        >
-                                            <ProductCard
-                                                id={dish.id}
-                                                name={dish.name}
-                                                image={dish.image}
-                                                category={dish.category}
-                                                restaurantCount={dish.restaurantCount}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                    {errorDishes ? (
+                        <div className="bg-red-100 text-red-700 p-4 rounded-lg mt-4">
+                            {errorDishes}
                         </div>
-
-                        {dishesScroll.left && (
-                            <button
-                                onClick={scrollDishesLeft}
-                                className="absolute top-1/2 -left-4 transform -translate-y-1/2 bg-white w-8 h-8 rounded-full shadow-md flex items-center justify-center z-10 hover:bg-gray-100"
+                    ) : loadingDishes ? (
+                        <div className="flex space-x-4 overflow-hidden pb-4 mt-4">
+                            {[...Array(4)].map((_, index) => (
+                                <div key={index} className="flex-shrink-0 w-64 h-64 bg-gray-200 animate-pulse rounded-lg"></div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="relative">
+                            <div
+                                ref={dishesRef}
+                                className="flex space-x-4 overflow-hidden pb-4"
+                                onScroll={() => handleScroll(dishesRef, setDishesScroll)}
                             >
-                                <FiChevronLeft className="text-gray-600" />
-                            </button>
-                        )}
+                                {dishes.map((dish) => (
+                                    <div key={dish.id || dish.name} className="flex-shrink-0 w-64">
+                                        <DishCard
+                                            id={dish.id || dish.name}
+                                            image={dish.imageUrl || dish.image}
+                                            name={dish.vietnameseName || dish.name}
+                                            ingredientCount={dish.ingredients?.length || 0}
+                                            ingredients={dish.ingredients || []}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
 
-                        {dishesScroll.right && (
-                            <button
-                                onClick={scrollDishesRight}
-                                className="absolute top-1/2 -right-4 transform -translate-y-1/2 bg-white w-8 h-8 rounded-full shadow-md flex items-center justify-center z-10 hover:bg-gray-100"
-                            >
-                                <FiChevronRight className="text-gray-600" />
-                            </button>
-                        )}
-                    </div>
+                            {dishesScroll.left && (
+                                <button
+                                    onClick={scrollDishesLeft}
+                                    className="absolute top-1/2 -left-4 transform -translate-y-1/2 bg-white w-8 h-8 rounded-full shadow-md flex items-center justify-center z-10 hover:bg-gray-100"
+                                >
+                                    <FiChevronLeft className="text-gray-600" />
+                                </button>
+                            )}
+
+                            {dishesScroll.right && (
+                                <button
+                                    onClick={scrollDishesRight}
+                                    className="absolute top-1/2 -right-4 transform -translate-y-1/2 bg-white w-8 h-8 rounded-full shadow-md flex items-center justify-center z-10 hover:bg-gray-100"
+                                >
+                                    <FiChevronRight className="text-gray-600" />
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </section>
 
                 {/* AI Shopping Assistant Section */}
@@ -363,7 +439,8 @@ const HomePage = () => {
                         </div>
                     </div>
                 </section>
-                {/* Partner Restaurants Section - Cải thiện phần này */}
+
+                {/* Partner Restaurants Section */}
                 <section>
                     <h2 className="text-2xl font-bold text-gray-800">Siêu thị, nhà cung cấp liên kết</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">

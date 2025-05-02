@@ -12,10 +12,8 @@ const ProductCard = ({ id, vietnameseName, name, unit, image, category }) => {
         try {
             setLoading(true);
 
-            // Fetch đầy đủ thông tin nguyên liệu từ API
             const ingredientDetails = await ingredientService.getIngredientById(id);
 
-            // Kết hợp dữ liệu từ API với props
             const completeIngredient = {
                 id: ingredientDetails.id,
                 vietnameseName: ingredientDetails.vietnameseName,
@@ -23,14 +21,13 @@ const ProductCard = ({ id, vietnameseName, name, unit, image, category }) => {
                 unit: ingredientDetails.unit,
                 image: ingredientDetails.imageUrl,
                 category: ingredientDetails.category || category || 'Khác',
-                quantity: 1  // Mặc định số lượng là 1
+                quantity: 1
             };
 
             openModal('ingredients', [completeIngredient]);
         } catch (error) {
             console.error('Error fetching ingredient details:', error);
 
-            // Nếu API lỗi, sử dụng dữ liệu có sẵn
             const fallbackIngredient = {
                 id,
                 vietnameseName,
@@ -38,7 +35,7 @@ const ProductCard = ({ id, vietnameseName, name, unit, image, category }) => {
                 unit: unit,
                 image,
                 category,
-                quantity: 1  // Mặc định số lượng là 1
+                quantity: 1
             };
 
             openModal('ingredients', [fallbackIngredient]);
