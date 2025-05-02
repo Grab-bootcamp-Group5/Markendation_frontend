@@ -80,10 +80,34 @@ export const basketService = {
 
     saveFavoriteBasket: async () => {
         try {
-            const response = await axiosPrivate.post('/basket/save');
+            const storedBasket = localStorage.getItem('basketItems');
+            let basketData = storedBasket ? JSON.parse(storedBasket) : { ingredients: [], dishes: {} };
+
+            const formattedBasketData = formatBasketData(basketData);
+
+            const response = await axiosPrivate.post('/basket/save', formattedBasketData);
             return response.data;
         } catch (error) {
             console.error("Error saving favorite basket:", error);
+            throw error;
+        }
+    },
+    getSavedBaskets: async () => {
+        try {
+            const response = await axiosPrivate.get('/basket/savedBaskets');
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching saved baskets:", error);
+            throw error;
+        }
+    },
+
+    removeSavedBasket: async (basketIndex) => {
+        try {
+            const response = await axiosPrivate.post(`/basket/remove/${basketIndex}`);
+            return response.data;
+        } catch (error) {
+            console.error("Error removing saved basket:", error);
             throw error;
         }
     },

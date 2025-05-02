@@ -1,26 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SavedBasketSection from '../components/saved-baskets/SavedBasketSection';
 import SavedDishSection from '../components/saved-baskets/SavedDishSection';
-import { savedBaskets } from '../assets/savedBasketsData';
+import { basketService } from '../services/basketService';
+import { useBasket } from '../context/BasketContext';
 import cartIcon from '../assets/images/cart.png';
-import { FiShoppingCart, FiTrash2 } from 'react-icons/fi';
-
+import { FiShoppingCart, FiTrash2, FiArrowLeft } from 'react-icons/fi';
 
 const SavedBasketDetailPage = () => {
     const { basketId } = useParams();
     const navigate = useNavigate();
     const [basket, setBasket] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { updateBasket } = useBasket();
 
     useEffect(() => {
-        // Simulate fetching data
-        setTimeout(() => {
-            const foundBasket = savedBaskets.find(basket => basket.id === Number(basketId));
+        fetchSavedBasket();
+    }, [basketId]);
+
+    const fetchSavedBasket = async () => {
+        try {
+            setLoading(true);
+            // Lấy danh sách giỏ hàng đã lưu và tìm giỏ hàng cụ thể theo id
+            const savedBaskets = await basketService.getSavedBaskets();
+            const foundBasket = savedBaskets.find((basket, index) => index === parseInt(basketId));
 
             if (foundBasket) {
                 setBasket(foundBasket);
@@ -30,56 +37,37 @@ const SavedBasketDetailPage = () => {
             }
 
             setLoading(false);
-        }, 500);
-    }, [basketId, navigate]);
-
-    const handleLoadToCart = () => {
-        if (basket) {
-            const currentBasketJSON = localStorage.getItem('basketItems');
-            let currentBasket = currentBasketJSON ? JSON.parse(currentBasketJSON) : { ingredients: [], dishes: {} };
-
-            const ingredientMap = new Map();
-            currentBasket.ingredients.forEach(ingredient => {
-                ingredientMap.set(ingredient.id, ingredient);
-            });
-
-            // Merge ingredients - add quantities if ingredient already exists
-            basket.ingredients.forEach(newIngredient => {
-                if (ingredientMap.has(newIngredient.id)) {
-                    const existingIngredient = ingredientMap.get(newIngredient.id);
-                    existingIngredient.quantity = parseFloat((existingIngredient.quantity + newIngredient.quantity).toFixed(1));
-                } else {
-                    currentBasket.ingredients.push({ ...newIngredient });
-                }
-            });
-
-            // Merge dishes - handle by unique dish ID
-            Object.entries(basket.dishes).forEach(([dishId, newDish]) => {
-                let uniqueDishId = dishId;
-                let counter = 1;
-
-                while (currentBasket.dishes[uniqueDishId]) {
-                    uniqueDishId = `${dishId}_${counter}`;
-                    counter++;
-                }
-
-                currentBasket.dishes[uniqueDishId] = { ...newDish };
-            });
-
-            localStorage.setItem('basketItems', JSON.stringify(currentBasket));
-
-            const event = new CustomEvent('basketUpdated');
-            window.dispatchEvent(event);
-
-            toast.success(`Đã thêm "${basket.name}" vào giỏ hàng!`);
-            navigate("/basket");
+        } catch (error) {
+            console.error("Error fetching saved basket:", error);
+            toast.error("Không thể tải giỏ hàng đã lưu. Vui lòng thử lại sau.");
+            setLoading(false);
+            navigate("/saved-baskets");
         }
     };
 
-    // fetch api
-    const handleDeleteSavedBasket = () => {
-        toast.success(`Đã xóa "${basket.name}" khỏi danh sách giỏ hàng đã lưu!`);
-        navigate("/saved-baskets");
+    const handleLoadToCart = async () => {
+        if (basket) {
+            try {
+                // Sử dụng context để cập nhật giỏ hàng hiện tại
+                await updateBasket(basket);
+                toast.success("Đã tải giỏ hàng thành công!");
+                navigate("/basket");
+            } catch (error) {
+                console.error("Error loading saved basket:", error);
+                toast.error("Không thể tải giỏ hàng. Vui lòng thử lại sau.");
+            }
+        }
+    };
+
+    const handleDeleteSavedBasket = async () => {
+        try {
+            await basketService.removeSavedBasket(parseInt(basketId));
+            toast.success("Đã xóa giỏ hàng thành công!");
+            navigate("/saved-baskets");
+        } catch (error) {
+            console.error("Error removing saved basket:", error);
+            toast.error("Không thể xóa giỏ hàng. Vui lòng thử lại sau.");
+        }
     };
 
     if (loading) {
@@ -112,6 +100,25 @@ const SavedBasketDetailPage = () => {
         );
     }
 
+    // Định dạng ngày
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+
+        try {
+            const date = new Date(dateString);
+            return new Intl.DateTimeFormat('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(date);
+        } catch (error) {
+            console.error("Error formatting date:", error);
+            return '';
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
             <Header />
@@ -119,15 +126,18 @@ const SavedBasketDetailPage = () => {
 
             <div className="container mx-auto px-4 py-8">
                 <div className="bg-green-600 py-3 px-4 flex justify-between items-center mb-px">
+
                     <div className="flex items-center gap-2">
                         <img src={cartIcon} alt="" className="h-7 w-7 mr-2" />
                         <h1 className="text-white text-xl font-medium">Giỏ hàng đã lưu</h1>
                     </div>
-                    <div className="text-white font-medium">{basket.name}</div>
+                    <div className="text-white font-medium">
+                        {basket.savedAt && `Đã lưu: ${formatDate(basket.savedAt)}`}
+                    </div>
                 </div>
                 <div className="bg-white border border-gray-200 border-t-0">
                     {/* Ingredients Section */}
-                    {basket.ingredients.length > 0 && (
+                    {basket.ingredients && basket.ingredients.length > 0 && (
                         <SavedBasketSection
                             title="Nguyên Liệu"
                             items={basket.ingredients}
@@ -135,12 +145,19 @@ const SavedBasketDetailPage = () => {
                     )}
 
                     {/* Dishes Section */}
-                    {Object.keys(basket.dishes).length > 0 && (
+                    {basket.dishes && Object.keys(basket.dishes).length > 0 && (
                         <SavedDishSection dishes={basket.dishes} />
                     )}
 
                     {/* Actions */}
                     <div className="py-4 flex justify-center gap-4 border-t border-gray-200 mt-4">
+                        <Link
+                            to="/saved-baskets"
+                            className="bg-gray-600 text-white px-6 py-3 flex items-center justify-center rounded-md"
+                        >
+                            <FiArrowLeft className="mr-2" />
+                            <span>Trở về danh sách giỏ hàng đã lưu</span>
+                        </Link>
                         <button
                             onClick={handleLoadToCart}
                             className="bg-green-600 text-white px-6 py-3 flex items-center justify-center rounded-md"

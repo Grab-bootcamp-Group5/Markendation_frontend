@@ -7,14 +7,12 @@ const SavedDishSection = ({ dishes }) => {
     const dishesArray = Object.values(dishes || {});
 
     return (
-        <div>
-            <div className="flex items-center py-3 px-4 border-b border-gray-100">
-                <div className="flex items-center">
-                    <h2 className="text-xl font-bold text-gray-900">Món ăn</h2>
-                </div>
+        <div className="border-b border-gray-100">
+            <div className="flex items-center justify-between py-3 px-4 bg-gray-50">
+                <h2 className="text-xl font-bold text-gray-900">Món ăn</h2>
                 <button
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="ml-2 bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                    className="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center"
                 >
                     {isExpanded ? <FiChevronsUp size={20} /> : <FiChevronsDown size={20} />}
                 </button>

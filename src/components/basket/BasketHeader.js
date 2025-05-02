@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FiBookmark } from 'react-icons/fi';
 import cartIcon from '../../assets/images/cart.png';
 
 const BasketHeader = ({ saveCart }) => {
+
     return (
         <div className="bg-green-600 py-3 px-4 flex justify-between items-center mb-px">
             <div className="flex items-center gap-2">

@@ -177,14 +177,17 @@ const BasketPage = () => {
     // Lưu giỏ hàng yêu thích
     const saveFavoriteCart = async () => {
         try {
-            // Đảm bảo giỏ hàng đã được đồng bộ với server trước khi lưu
             if (syncStatus !== 'synced') {
                 await updateBasket();
             }
 
-            // Gọi API lưu giỏ hàng yêu thích (cần triển khai API này)
-            // Ví dụ: await basketService.saveFavoriteBasket(basketItems);
-            toast.success("Đã lưu giỏ hàng yêu thích thành công!");
+            const result = await basketService.saveFavoriteBasket();
+
+            if (result) {
+                toast.success("Đã lưu giỏ hàng yêu thích thành công!");
+            } else {
+                toast.error("Không thể lưu giỏ hàng yêu thích. Vui lòng thử lại sau.");
+            }
         } catch (error) {
             console.error("Error saving favorite basket:", error);
             toast.error("Không thể lưu giỏ hàng yêu thích. Vui lòng thử lại sau.");
