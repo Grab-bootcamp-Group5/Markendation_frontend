@@ -35,7 +35,8 @@ function App() {
               <Route path='/calculate' element={<CheckoutCalculation />} />
               <Route path='/distance' element={<DistanceCalculator />} />
             </Routes>
-            <ToastContainer />
+            <ToastContainer
+              position="bottom-right" />
           </div>
         </ModalProvider>
       </BasketProvider>

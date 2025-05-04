@@ -10,6 +10,8 @@ import { useModal } from '../context/ModalContext';
 import { ingredientService } from '../services/ingredientService';
 import { dishService } from '../services/dishService';
 import { restaurantsList } from '../assets/assets';
+import { toast } from 'react-toastify';
+import { aiService } from '../services/aiService';
 
 const HomePage = () => {
     const [ingredients, setIngredients] = useState([]);
@@ -134,7 +136,6 @@ const HomePage = () => {
     const [previewUrl, setPreviewUrl] = useState('');
     const [isUploading, setIsUploading] = useState(false);
 
-    // Handle image selection
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -165,41 +166,48 @@ const HomePage = () => {
 
     const handleUpload = async () => {
         if (!selectedImage) {
-            alert('Vui lòng chọn một hình ảnh trước.');
+            toast.error('Vui lòng chọn một hình ảnh trước.');
             return;
         }
 
         setIsUploading(true);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const dishResult = await aiService.getDishSuggestionByImage(selectedImage);
 
-            const randomIngredients = [];
-            if (ingredients.length > 0) {
-                const numIngredients = Math.floor(Math.random() * 3) + 2; // 2-4 random ingredients
+            if (dishResult && dishResult.ingredients && dishResult.ingredients.length > 0) {
+                openModal('dish', {
+                    id: dishResult.id,
+                    name: dishResult.name || 'Món ăn đề xuất',
+                    vietnameseName: dishResult.vietnameseName || dishResult.name || 'Món ăn đề xuất',
+                    image: dishResult.imageUrl || selectedImage ? URL.createObjectURL(selectedImage) : null,
+                    ingredients: dishResult.ingredients.map(ingredient => ({
+                        id: ingredient.id,
+                        name: ingredient.name,
+                        vietnameseName: ingredient.vietnameseName || ingredient.name,
+                        image: ingredient.imageUrl,
+                        quantity: ingredient.quantity,
+                        unit: ingredient.unit,
+                        category: ingredient.category || 'Khác'
+                    })),
+                    servings: dishResult.servings || 1
+                });
 
-                for (let i = 0; i < numIngredients; i++) {
-                    const randomIndex = Math.floor(Math.random() * ingredients.length);
-                    randomIngredients.push(ingredients[randomIndex]);
-                }
-
-                openModal('ingredients', randomIngredients);
+                toast.success('Đã nhận diện món ăn thành công!');
             } else {
-                throw new Error('No ingredients available');
+                toast.warning('Không nhận diện được món ăn.');
             }
 
             setSelectedImage(null);
             setPreviewUrl('');
-
         } catch (error) {
             console.error('Upload failed:', error);
-            alert('Có lỗi xảy ra khi tải lên hình ảnh. Vui lòng thử lại.');
+            toast.error('Có lỗi xảy ra khi tải lên hình ảnh. Vui lòng thử lại sau.');
         } finally {
             setIsUploading(false);
         }
     };
 
-    // Handle text search
     const handleSearchSubmit = (e) => {
         e.preventDefault();
         const searchInput = e.target.querySelector('input').value.trim();
@@ -208,17 +216,14 @@ const HomePage = () => {
 
         setSearchQuery(searchInput);
 
-        // Check if the search matches any dish names
         const matchedDish = dishes.find(dish =>
             dish.name?.toLowerCase().includes(searchInput.toLowerCase()) ||
             dish.vietnameseName?.toLowerCase().includes(searchInput.toLowerCase())
         );
 
         if (matchedDish) {
-            // Use the dish with ingredients
             openModal('dish', matchedDish);
         } else {
-            // Simulate ingredient search results
             if (ingredients.length > 0) {
                 const randomIngredients = [];
                 const numIngredients = Math.floor(Math.random() * 3) + 2; // 2-4 random ingredients
@@ -234,7 +239,6 @@ const HomePage = () => {
             }
         }
 
-        // Clear search input
         e.target.querySelector('input').value = '';
     };
 

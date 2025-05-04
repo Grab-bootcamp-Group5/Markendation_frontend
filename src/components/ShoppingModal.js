@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
+import { MdOutlineImageNotSupported } from "react-icons/md";
 import { toast } from 'react-toastify';
 import { getIngredientById, getDishWithIngredients, images } from '../assets/assets';
 import { useBasket } from '../context/BasketContext';
@@ -7,21 +8,16 @@ import { useBasket } from '../context/BasketContext';
 const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
     const [quantity, setQuantity] = useState(1);
     const [dishWithIngredients, setDishWithIngredients] = useState(null);
-    const { addIngredient, addDish } = useBasket(); // Use context functions directly
+    const { addIngredient, addDish } = useBasket();
 
-    // Reset modal when opened
     useEffect(() => {
         if (isOpen) {
-            // Reset to default value
             setQuantity(1);
 
-            // Get dish information if needed
             if (type === 'dish' && itemData) {
-                // Check if itemData already has ingredients
                 if (itemData.ingredients && itemData.ingredients.length > 0) {
                     setDishWithIngredients(itemData);
                 } else if (itemData.id) {
-                    // Otherwise try to get dish details
                     const dish = getDishWithIngredients(itemData.id);
                     setDishWithIngredients(dish || itemData);
                 } else {
@@ -35,19 +31,16 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
 
     if (!isOpen) return null;
 
-    // Handle quantity change
     const handleQuantityChange = (value) => {
         const parsedValue = parseInt(value, 10);
         setQuantity(isNaN(parsedValue) || parsedValue < 1 ? 1 : parsedValue);
     };
 
-    // Handle adding to cart
     const handleAddToCart = async () => {
         try {
             if (type === 'dish' && dishWithIngredients) {
-                // Process dish data for the cart
                 const dish = {
-                    id: dishWithIngredients.id || `dish-${Date.now()}`, // Fallback ID if none exists
+                    id: dishWithIngredients.id || `dish-${Date.now()}`,
                     name: dishWithIngredients.name,
                     vietnameseName: dishWithIngredients.vietnameseName || dishWithIngredients.name,
                     image: dishWithIngredients.imageUrl || dishWithIngredients.image,
@@ -57,17 +50,15 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                         name: ingredient.name,
                         vietnameseName: ingredient.vietnameseName || ingredient.name,
                         image: ingredient.imageUrl || ingredient.image,
-                        quantity: 1,
+                        quantity: ingredient.quantity,
                         unit: ingredient.unit || 'g',
                         category: ingredient.category || 'Khác'
                     }))
                 };
 
-                // Add dish to basket using context function
                 await addDish(dish);
                 toast.success(`Đã thêm ${dish.vietnameseName || dish.name} vào giỏ hàng!`);
             } else if ((type === 'ingredients' || type === 'search') && itemData) {
-                // Process ingredients for the cart
                 const ingredientsArray = Array.isArray(itemData) ? itemData : [itemData];
 
                 for (const ingredient of ingredientsArray) {
@@ -81,7 +72,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                         category: ingredient.category || 'Khác'
                     };
 
-                    // Add ingredient to basket using context function
                     await addIngredient(processedIngredient);
                 }
 
@@ -96,7 +86,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                 }
             }
 
-            // Trigger basket updated event
             window.dispatchEvent(new CustomEvent('basketUpdated'));
 
             // Close modal
@@ -119,7 +108,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
         return 'g';
     };
 
-    // Determine title, image and ingredients
     let title = '';
     let image = '';
     let ingredients = [];
@@ -130,7 +118,9 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
         image = dishWithIngredients.imageUrl || dishWithIngredients.image;
         ingredients = (dishWithIngredients.ingredients || []).map(ing => ({
             name: ing.vietnameseName || ing.name,
-            category: ing.category || 'Khác'
+            category: ing.category || 'Khác',
+            quantity: ing.quantity || 1,
+            unit: ing.unit || 'g'
         }));
     } else if (type === 'ingredients') {
         if (Array.isArray(itemData) && itemData.length > 1) {
@@ -173,14 +163,23 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                         {type === 'dish' && ingredients.length > 0 && (
                             <div className="mb-8">
                                 <h3 className="text-xl font-bold mb-4">Thành phần</h3>
-                                <ul className="space-y-2">
-                                    {ingredients.map((ing, index) => (
-                                        <li key={index} className="flex items-start">
-                                            <span className="mr-2">•</span>
-                                            <span>{ing.name}</span>
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div className="bg-gray-50 rounded-lg p-3">
+                                    <ul className="divide-y divide-gray-200">
+                                        {ingredients.map((ing, index) => (
+                                            <li key={index} className="flex items-start justify-between py-1 border-b border-gray-100">
+                                                <div className="flex items-center">
+                                                    <span className="mr-2 text-green-600">•</span>
+                                                    <span className="font-medium">{ing.name}</span>
+                                                </div>
+                                                {ing.quantity && ing.unit &&
+                                                    <span className="text-gray-700 font-medium">
+                                                        {ing.quantity} <span className="text-gray-500">{ing.unit}</span>
+                                                    </span>
+                                                }
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             </div>
                         )}
 
@@ -190,21 +189,28 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                                 <h3 className="text-xl font-bold mb-4">Nguyên liệu được nhận diện</h3>
                                 <ul className="space-y-2">
                                     {Array.isArray(itemData) && itemData.map((item, index) => (
-                                        <li key={index} className="flex items-center space-x-2 py-1">
-                                            {(item.image || item.imageUrl) && (
-                                                <div className="w-8 h-8 flex-shrink-0">
-                                                    <img
-                                                        src={item.imageUrl || item.image}
-                                                        alt={item.vietnameseName || item.name}
-                                                        className="w-full h-full object-contain rounded-full"
-                                                        onError={(e) => {
-                                                            e.target.onerror = null;
-                                                            e.target.src = '/images/default-ingredient.jpg';
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
-                                            <span className="text-gray-700">{item.vietnameseName || item.name}</span>
+                                        <li key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                            <div className="flex items-center">
+                                                {(item.image || item.imageUrl) && (
+                                                    <div className="w-8 h-8 flex-shrink-0 mr-2">
+                                                        <img
+                                                            src={item.imageUrl || item.image}
+                                                            alt={item.vietnameseName || item.name}
+                                                            className="w-full h-full object-contain rounded-full"
+                                                            onError={(e) => {
+                                                                e.target.onerror = null;
+                                                                e.target.src = '/images/default-ingredient.jpg';
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
+                                                <span className="font-medium">{item.vietnameseName || item.name}</span>
+                                            </div>
+                                            {item.quantity && item.unit &&
+                                                <span className="text-gray-700 font-medium">
+                                                    {item.quantity} <span className="text-gray-500">{item.unit}</span>
+                                                </span>
+                                            }
                                         </li>
                                     ))}
                                 </ul>
@@ -251,23 +257,24 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                     <div className="flex-shrink-0 w-full md:w-64 flex items-center justify-center p-4">
                         <div className="w-48 h-64 overflow-hidden rounded-3xl bg-gray-100 flex items-center justify-center">
                             {image ? (
-                                <img
-                                    src={image}
-                                    alt={title}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = '/images/default-dish.jpg';
-                                    }}
-                                />
+                                <>
+                                    <img
+                                        src={image}
+                                        alt={title}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.nextElementSibling.style.display = 'flex';
+                                        }}
+                                    />
+                                    <div className="w-full h-full flex-col items-center justify-center hidden">
+                                        <MdOutlineImageNotSupported className="h-16 w-16 mb-2 text-gray-400" />
+                                        <span className="text-sm text-gray-400">Không có hình ảnh</span>
+                                    </div>
+                                </>
                             ) : (
                                 <div className="text-gray-400 flex flex-col items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7Z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 15 8 11C9 10 10 10 11 11L16 16" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 14 16 12C17 11 18 11 19 12L20 13" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
-                                    </svg>
+                                    <MdOutlineImageNotSupported className="h-16 w-16 mb-2" />
                                     <span className="text-sm">Không có hình ảnh</span>
                                 </div>
                             )}
