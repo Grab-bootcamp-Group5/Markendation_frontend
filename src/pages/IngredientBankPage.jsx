@@ -17,33 +17,51 @@ const IngredientBankPage = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalIngredients, setTotalIngredients] = useState(0);
+    const [searchPattern, setSearchPattern] = useState('');
     const pageSize = 32;
 
-    useEffect(() => {
-        const fetchIngredientsData = async () => {
-            setLoading(true);
-            try {
-                const totalCount = await ingredientService.getTotalIngredientSize();
-                setTotalIngredients(totalCount);
-                setTotalPages(Math.ceil(totalCount / pageSize));
+    // Fetch ingredients based on current page and search pattern
+    const fetchIngredients = async (page, pattern) => {
+        setLoading(true);
+        try {
+            const response = await ingredientService.getIngredients(page, pageSize, pattern);
 
-                const response = await ingredientService.getIngredients(currentPage, pageSize);
-
-                if (response) {
+            // Assuming the API returns an object with data and metadata
+            if (response) {
+                if (response.content) {
+                    // Handle paginated response format
+                    setIngredients(response.content);
+                    setFilteredIngredients(response.content);
+                    setTotalPages(response.totalPages);
+                    setTotalIngredients(response.totalElements);
+                } else {
+                    // Handle array response format
                     setIngredients(response);
                     setFilteredIngredients(response);
+
+                    // If we don't get pagination info from API, estimate it
+                    if (response.length < pageSize) {
+                        setTotalPages(currentPage + 1);
+                    } else {
+                        setTotalPages(currentPage + 2); // At least one more page
+                    }
+                    setTotalIngredients((currentPage + 1) * pageSize + (response.length < pageSize ? 0 : 1));
                 }
-                setLoading(false);
-            } catch (error) {
-                console.error("Error details:", error);
-                setError("Có lỗi xảy ra khi tải dữ liệu nguyên liệu. Vui lòng thử lại sau.");
-                setLoading(false);
             }
-        };
+            setLoading(false);
+        } catch (error) {
+            console.error("Error details:", error);
+            setError("Có lỗi xảy ra khi tải dữ liệu nguyên liệu. Vui lòng thử lại sau.");
+            setLoading(false);
+        }
+    };
 
-        fetchIngredientsData();
-    }, [currentPage]);
+    // Initial load and when page/search changes
+    useEffect(() => {
+        fetchIngredients(currentPage, searchPattern);
+    }, [currentPage, searchPattern]);
 
+    // Filter by category (client-side)
     useEffect(() => {
         if (activeCategory === "Tất cả") {
             setFilteredIngredients(ingredients);
@@ -53,34 +71,21 @@ const IngredientBankPage = () => {
         }
     }, [activeCategory, ingredients]);
 
+    // Handle search from SearchBar component
     const handleSearch = (searchTerm) => {
-        if (!searchTerm) {
-            if (activeCategory === "Tất cả") {
-                setFilteredIngredients(ingredients);
-            } else {
-                const filtered = ingredients.filter(item => item.category === activeCategory);
-                setFilteredIngredients(filtered);
-            }
-            return;
+        if (searchTerm !== searchPattern) {
+            setCurrentPage(0); // Reset to first page on new search
+            setSearchPattern(searchTerm);
         }
-
-        const filtered = ingredients.filter(item => {
-            const matchesSearch =
-                (item.vietnameseName && item.vietnameseName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-            const matchesCategory = activeCategory === "Tất cả" || item.category === activeCategory;
-            return matchesSearch && matchesCategory;
-        });
-
-        setFilteredIngredients(filtered);
     };
 
+    // Handle page navigation
     const handlePageChange = (newPage) => {
         window.scrollTo(0, 0);
         setCurrentPage(newPage);
     };
 
+    // Render pagination controls
     const renderPagination = () => {
         if (totalPages <= 1) return null;
 
@@ -199,14 +204,14 @@ const IngredientBankPage = () => {
                         {!loading && (
                             <div className="text-sm text-gray-600">
                                 Hiển thị {filteredIngredients.length} nguyên liệu
-                                {activeCategory === "Tất cả" && ` (trang ${currentPage + 1}/${totalPages})`}
+                                {(activeCategory === "Tất cả" || searchPattern) && ` (trang ${currentPage + 1}/${totalPages})`}
                             </div>
                         )}
                     </div>
 
                     {loading ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((index) => (
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
                                 <div key={index} className="w-full h-64 bg-gray-200 animate-pulse rounded-lg"></div>
                             ))}
                         </div>
@@ -226,8 +231,8 @@ const IngredientBankPage = () => {
                                 ))}
                             </div>
 
-                            {/* Only show pagination when viewing all ingredients */}
-                            {activeCategory === "Tất cả" && renderPagination()}
+                            {/* Show pagination for all ingredients or when searching */}
+                            {(activeCategory === "Tất cả" || searchPattern) && renderPagination()}
                         </>
                     ) : (
                         <div className="text-center py-12">

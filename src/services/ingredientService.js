@@ -2,7 +2,6 @@ import axiosPublic from './axiosPublic';
 import axiosPrivate from './axiosPrivate';
 
 export const ingredientService = {
-    // Get information about a specific ingredient by ID
     getIngredientById: async (id) => {
         try {
             const response = await axiosPublic.get(`/public/ingredients/${id}`);
@@ -13,21 +12,13 @@ export const ingredientService = {
         }
     },
 
-    getIngredients: async (pageNo = 0, pageSize = 32) => {
+    getIngredients: async (pageNo = 0, pageSize = 32, pattern = '') => {
         try {
-            const response = await axiosPublic.get(`/public/ingredients?pageSize=${pageSize}&pageNo=${pageNo}`);
+            const searchParam = pattern ? `&pattern=${encodeURIComponent(pattern)}` : '';
+            const response = await axiosPublic.get(`/public/ingredients?pageSize=${pageSize}&pageNo=${pageNo}${searchParam}`);
             return response.data;
         } catch (error) {
-            console.error(`Error fetching ingredients (page ${pageNo}):`, error);
-            throw error;
-        }
-    },
-    getTotalIngredientSize: async () => {
-        try {
-            const response = await axiosPublic.get('/public/ingredients/totalSize');
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching total ingredient count:', error);
+            console.error(`Error fetching ingredients (page ${pageNo}, pattern: ${pattern}):`, error);
             throw error;
         }
     }

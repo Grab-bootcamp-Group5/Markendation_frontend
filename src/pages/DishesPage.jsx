@@ -14,57 +14,65 @@ const DishesPage = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalDishes, setTotalDishes] = useState(0);
+    const [searchPattern, setSearchPattern] = useState('');
     const pageSize = 12;
 
-    useEffect(() => {
-        const fetchDishesData = async () => {
-            setLoading(true);
-            try {
-                // Fetch total count first
-                const totalCount = await dishService.getTotalDishSize();
-                setTotalDishes(totalCount);
-                setTotalPages(Math.ceil(totalCount / pageSize));
+    // Fetch dishes based on current page and search pattern
+    const fetchDishes = async (page, pattern) => {
+        setLoading(true);
+        try {
+            const response = await dishService.getDishes(page, pageSize, pattern);
 
-                const response = await dishService.getDishes(currentPage, pageSize);
-
-                if (response) {
+            // Handle different response formats
+            if (response) {
+                if (response.content) {
+                    // Handle paginated response format
+                    setDishes(response.content);
+                    setFilteredDishes(response.content);
+                    setTotalPages(response.totalPages);
+                    setTotalDishes(response.totalElements);
+                } else {
+                    // Handle array response format
                     setDishes(response);
                     setFilteredDishes(response);
+
+                    // If we don't get pagination info from API, estimate it
+                    if (response.length < pageSize) {
+                        setTotalPages(currentPage + 1);
+                    } else {
+                        setTotalPages(currentPage + 2); // At least one more page
+                    }
+                    setTotalDishes((currentPage + 1) * pageSize + (response.length < pageSize ? 0 : 1));
                 }
-                setLoading(false);
-            } catch (error) {
-                console.error("Error details:", error);
-                setError("Có lỗi xảy ra khi tải dữ liệu món ăn. Vui lòng thử lại sau.");
-                setLoading(false);
             }
-        };
-
-        fetchDishesData();
-    }, [currentPage]);
-
-    useEffect(() => {
-        setFilteredDishes(dishes);
-    }, [dishes]);
-
-    const handleSearch = (searchTerm) => {
-        if (!searchTerm) {
-            setFilteredDishes(dishes);
-            return;
+            setLoading(false);
+        } catch (error) {
+            console.error("Error details:", error);
+            setError("Có lỗi xảy ra khi tải dữ liệu món ăn. Vui lòng thử lại sau.");
+            setLoading(false);
         }
-
-        const filtered = dishes.filter(dish => {
-            return (dish.vietnameseName && dish.vietnameseName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (dish.name && dish.name.toLowerCase().includes(searchTerm.toLowerCase()));
-        });
-
-        setFilteredDishes(filtered);
     };
 
+    // Initial load and when page/search changes
+    useEffect(() => {
+        fetchDishes(currentPage, searchPattern);
+    }, [currentPage, searchPattern]);
+
+    // Handle search from SearchBar component
+    const handleSearch = (searchTerm) => {
+        if (searchTerm.toLowerCase() !== searchPattern.toLowerCase()) {
+            setCurrentPage(0); // Reset to first page on new search
+            setSearchPattern(searchTerm);
+        }
+    };
+
+    // Handle page navigation
     const handlePageChange = (newPage) => {
         window.scrollTo(0, 0);
         setCurrentPage(newPage);
     };
 
+    // Render pagination controls
     const renderPagination = () => {
         if (totalPages <= 1) return null;
 
@@ -167,8 +175,6 @@ const DishesPage = () => {
                             <p>{error}</p>
                         </div>
                     )}
-
-
 
                     {/* Dishes grid */}
                     <div className="flex justify-between items-center mb-6">
