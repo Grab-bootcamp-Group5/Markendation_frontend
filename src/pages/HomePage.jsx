@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiSearch, FiChevronRight, FiChevronLeft, FiX } from 'react-icons/fi';
+import { FiSearch, FiChevronRight, FiChevronLeft, FiX, FiCamera, FiMessageSquare } from 'react-icons/fi';
 import ProductCard from '../components/ingredients/ProductCard';
 import DishCard from '../components/DishCard';
 import Header from '../components/Header';
@@ -29,6 +29,10 @@ const HomePage = () => {
     const [ingredientsScroll, setIngredientsScroll] = useState({ left: false, right: true });
     const [dishesScroll, setDishesScroll] = useState({ left: false, right: true });
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Highlight input
+    const searchInputRef = useRef(null);
+    const [activeTab, setActiveTab] = useState('text'); // 'text' or 'image'
 
     // Fetch ingredients from API
     useEffect(() => {
@@ -141,12 +145,12 @@ const HomePage = () => {
         if (!file) return;
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('Kích thước file quá lớn. Vui lòng chọn file nhỏ hơn 5MB.');
+            toast.error('Kích thước file quá lớn. Vui lòng chọn file nhỏ hơn 5MB.');
             return;
         }
 
         if (!file.type.startsWith('image/')) {
-            alert('Vui lòng chọn một file hình ảnh.');
+            toast.error('Vui lòng chọn một file hình ảnh.');
             return;
         }
 
@@ -210,7 +214,11 @@ const HomePage = () => {
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
-        const searchInput = e.target.querySelector('input').value.trim();
+
+        let searchInput = '';
+        if (searchInputRef.current) {
+            searchInput = searchInputRef.current.value.trim();
+        }
 
         if (!searchInput) return;
 
@@ -235,11 +243,20 @@ const HomePage = () => {
 
                 openModal('search', randomIngredients, searchInput);
             } else {
-                alert('Không tìm thấy kết quả phù hợp.');
+                toast.info('Không tìm thấy kết quả phù hợp.');
             }
         }
 
-        e.target.querySelector('input').value = '';
+        if (searchInputRef.current) {
+            searchInputRef.current.value = '';
+        }
+    };
+
+    const focusSearchInput = () => {
+        if (searchInputRef.current) {
+            searchInputRef.current.focus();
+            setActiveTab('text');
+        }
     };
 
     return (
@@ -247,7 +264,143 @@ const HomePage = () => {
             <Header />
             <Navbar />
 
-            <div className="container mx-auto px-4 py-8">
+            {/* Hero Section with Highlighted Input Methods */}
+            <section className="bg-gradient-to-r from-green-600 to-blue-600 py-12 mb-2">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-8">
+                        <h1 className="text-4xl font-bold text-white mb-2">Mua sắm thông minh cùng AI</h1>
+                        <p className="text-white text-lg opacity-90">Chỉ cần nói hoặc tải lên ảnh, chúng tôi sẽ giúp bạn chuẩn bị đầy đủ nguyên liệu</p>
+                    </div>
+
+                    <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div className="flex border-b">
+                            <button
+                                className={`flex-1 py-4 px-6 flex items-center justify-center gap-2 font-medium transition-all duration-300 ${activeTab === 'text'
+                                    ? 'text-green-600 border-b-2 border-green-600 translate-y-[1px]'
+                                    : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => setActiveTab('text')}
+                            >
+                                <FiMessageSquare size={20} className={`transition-transform duration-300 ${activeTab === 'text' ? 'scale-110' : ''}`} />
+                                <span>Nhập món muốn nấu</span>
+                            </button>
+                            <button
+                                className={`flex-1 py-4 px-6 flex items-center justify-center gap-2 font-medium transition-all duration-300 ${activeTab === 'image'
+                                    ? 'text-green-600 border-b-2 border-green-600 translate-y-[1px]'
+                                    : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => {
+                                    setActiveTab('image');
+                                    window.scrollTo({
+                                        top: 0,
+                                        behavior: 'smooth'
+                                    });
+                                }}
+                            >
+                                <FiCamera size={20} className={`transition-transform duration-300 ${activeTab === 'image' ? 'scale-110' : ''}`} />
+                                <span>Tải ảnh lên</span>
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            <div className={`transition-all duration-500 ${activeTab === 'text' ? 'opacity-100 transform translate-x-0' : 'opacity-0 absolute -translate-x-full'}`}>
+                                {activeTab === 'text' && (
+                                    <form onSubmit={handleSearchSubmit} className="relative">
+                                        <input
+                                            ref={searchInputRef}
+                                            type="text"
+                                            placeholder="Hôm nay bạn muốn ăn gì? VD: Tôi muốn ăn phở bò..."
+                                            className="w-full py-4 pl-12 pr-32 border border-gray-300 rounded-full text-lg"
+                                        />
+                                        <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
+                                        <button
+                                            type="submit"
+                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white px-6 py-3 rounded-full flex items-center text-base hover:bg-green-700 transition-all"
+                                        >
+                                            <img src={cartIcon} alt="" className="h-5 w-5 mr-2" />
+                                            <span>Đi chợ</span>
+                                            <FiChevronRight className="ml-1" />
+                                        </button>
+                                    </form>
+                                )}
+                            </div>
+                            <div className={`transition-all duration-500 ${activeTab === 'image' ? 'opacity-100 transform translate-x-0' : 'opacity-0 absolute translate-x-full'}`}>
+                                {activeTab === 'image' && (
+                                    <div className="flex flex-col items-center animate-fade-in">
+                                        <div className="w-full flex space-x-4">
+                                            <div className="flex-grow border-2 border-dashed border-gray-300 rounded-lg p-4 bg-white">
+                                                <div className="flex flex-col items-center justify-center min-h-40">
+                                                    <input
+                                                        type="file"
+                                                        id="image-upload"
+                                                        className="hidden"
+                                                        accept="image/*"
+                                                        onChange={handleImageChange}
+                                                    />
+                                                    {!previewUrl ? (
+                                                        <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center justify-center w-full">
+                                                            <div className="mb-3 bg-gray-100 p-4 rounded-full animate-pulse">
+                                                                <FiCamera className="w-8 h-8 text-gray-500" />
+                                                            </div>
+                                                            <div className="text-center">
+                                                                <p className="text-base font-medium text-gray-700 mb-1">Tải ảnh món ăn lên</p>
+                                                                <p className="text-xs text-gray-500">Kích thước tối đa 5MB.</p>
+                                                            </div>
+                                                        </label>
+                                                    ) : (
+                                                        <div className="relative w-full animate-fade-in">
+                                                            <img src={previewUrl} alt="Preview" className="w-full max-h-64 object-contain" />
+                                                            <button
+                                                                onClick={handleResetImage}
+                                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                                                            >
+                                                                <FiX />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center">
+                                                <button
+                                                    className={`bg-green-600 text-white px-6 py-4 rounded-lg flex items-center justify-center text-base hover:bg-green-700 transition-colors ${isUploading || !selectedImage ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                    onClick={handleUpload}
+                                                    disabled={isUploading || !selectedImage}
+                                                >
+                                                    {isUploading ? (
+                                                        <span>Đang tải...</span>
+                                                    ) : (
+                                                        <>
+                                                            <img src={cartIcon} alt="" className="h-5 w-5 mr-2" />
+                                                            <span>Nhận diện</span>
+                                                            <FiChevronRight className="ml-1" />
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-gray-500 mt-3 text-center">
+                                            Tải ảnh món ăn bạn muốn nấu, AI sẽ nhận diện và gợi ý nguyên liệu cần mua
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div className="container mx-auto px-4 py-4">
+                {/* Featured badges */}
+                <div className="flex flex-wrap gap-4 mb-8 justify-center">
+                    <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full flex items-center">
+                        <span className="font-medium">🎯 Dự đoán thông minh</span>
+                    </div>
+                    <div className="bg-green-100 text-green-800 px-4 py-2 rounded-full flex items-center">
+                        <span className="font-medium">📷 Nhận diện hình ảnh</span>
+                    </div>
+                    <div className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full flex items-center">
+                        <span className="font-medium">🧠 Gợi ý nguyên liệu</span>
+                    </div>
+                </div>
+
                 {/* Ingredients Section */}
                 <section className="mb-8">
                     <h2 className="text-2xl font-bold text-gray-800">Danh sách thực phẩm</h2>
@@ -357,90 +510,29 @@ const HomePage = () => {
                     )}
                 </section>
 
-                {/* AI Shopping Assistant Section */}
-                <section className="mb-8">
-                    <h2 className="text-xl font-medium mb-4 flex items-center">
-                        Mua sắm nguyên liệu cùng AI
-                        <span className="ml-2 text-blue-500">💧</span>
-                    </h2>
-                    <div className="relative mb-4">
-                        <form onSubmit={handleSearchSubmit}>
-                            <input
-                                type="text"
-                                placeholder="Hôm nay bạn muốn ăn gì? Hãy để tôi giúp bạn đi chợ nhé!"
-                                className="w-full py-3 pl-10 pr-4 border border-gray-300 rounded-full"
-                            />
-                            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                            <button
-                                type="submit"
-                                className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-green-600 text-white px-4 py-2 rounded-full flex items-center text-sm"
-                            >
-                                <img src={cartIcon} alt="" className="h-7 w-7 mr-2" />
-                                <span>Đi chợ nào</span>
-                                <FiChevronRight className="ml-1" />
-                            </button>
-                        </form>
+                {/* Call to Action Section */}
+                <section className="mb-12 bg-gray-50 p-8 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-bold mb-2">Chưa tìm thấy món ăn bạn muốn?</h2>
+                        <p className="text-gray-600">Hãy thử sử dụng công cụ tìm kiếm thông minh của chúng tôi</p>
                     </div>
-                </section>
 
-                {/* AI Kitchen Assistant Section */}
-                <section className="mb-8">
-                    <h2 className="text-xl font-medium mb-4 flex items-center">
-                        Nhà giả kim - Biến hình ảnh thành món ăn
-                        <span className="ml-2 text-yellow-500">✨</span>
-                    </h2>
-                    <div className="flex justify-between items-center gap-4">
-                        <div className="flex-grow border-2 border-dashed border-gray-300 rounded-lg p-6 bg-white">
-                            <div className="flex flex-col items-center justify-center min-h-48">
-                                <input
-                                    type="file"
-                                    id="image-upload"
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                />
-                                {!previewUrl ? (
-                                    <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center justify-center w-full">
-                                        <div className="mb-4">
-                                            <svg className="w-12 h-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                            </svg>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-sm font-medium text-gray-700 mb-1">Browse photo or drop here</p>
-                                            <p className="text-xs text-gray-500">A photo larger than 400 pixels work best. Max photo size 5 MB.</p>
-                                        </div>
-                                    </label>
-                                ) : (
-                                    <div className="relative w-full">
-                                        <img src={previewUrl} alt="Preview" className="w-full max-h-64 object-contain" />
-                                        <button
-                                            onClick={handleResetImage}
-                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center"
-                                        >
-                                            <FiX />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <div>
-                            <button
-                                className={`bg-green-600 text-white px-6 py-4 rounded-lg flex items-center justify-center text-base hover:bg-green-700 transition-colors ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                onClick={handleUpload}
-                                disabled={isUploading || !selectedImage}
-                            >
-                                {isUploading ? (
-                                    <span>Đang tải...</span>
-                                ) : (
-                                    <>
-                                        <img src={cartIcon} alt="" className="h-7 w-7 mr-2" />
-                                        <span>Đi chợ nào</span>
-                                        <FiChevronRight className="ml-1" />
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                    <div className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto">
+                        <button
+                            onClick={focusSearchInput}
+                            className="flex-1 bg-white border border-green-600 text-green-600 px-6 py-3 rounded-lg flex items-center justify-center shadow-sm hover:bg-green-50 transition-colors"
+                        >
+                            <FiMessageSquare className="mr-2" />
+                            <span>Nhập món ăn</span>
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab('image')}
+                            className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg flex items-center justify-center shadow-sm hover:bg-green-700 transition-colors"
+                        >
+                            <FiCamera className="mr-2" />
+                            <span>Tải ảnh lên</span>
+                        </button>
                     </div>
                 </section>
 
