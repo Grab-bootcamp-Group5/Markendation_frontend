@@ -17,30 +17,24 @@ const DishesPage = () => {
     const [searchPattern, setSearchPattern] = useState('');
     const pageSize = 12;
 
-    // Fetch dishes based on current page and search pattern
     const fetchDishes = async (page, pattern) => {
         setLoading(true);
         try {
             const response = await dishService.getDishes(page, pageSize, pattern);
-
-            // Handle different response formats
             if (response) {
                 if (response.content) {
-                    // Handle paginated response format
                     setDishes(response.content);
                     setFilteredDishes(response.content);
                     setTotalPages(response.totalPages);
                     setTotalDishes(response.totalElements);
                 } else {
-                    // Handle array response format
                     setDishes(response);
                     setFilteredDishes(response);
 
-                    // If we don't get pagination info from API, estimate it
                     if (response.length < pageSize) {
                         setTotalPages(currentPage + 1);
                     } else {
-                        setTotalPages(currentPage + 2); // At least one more page
+                        setTotalPages(currentPage + 2);
                     }
                     setTotalDishes((currentPage + 1) * pageSize + (response.length < pageSize ? 0 : 1));
                 }
@@ -53,26 +47,22 @@ const DishesPage = () => {
         }
     };
 
-    // Initial load and when page/search changes
     useEffect(() => {
         fetchDishes(currentPage, searchPattern);
     }, [currentPage, searchPattern]);
 
-    // Handle search from SearchBar component
     const handleSearch = (searchTerm) => {
         if (searchTerm.toLowerCase() !== searchPattern.toLowerCase()) {
-            setCurrentPage(0); // Reset to first page on new search
+            setCurrentPage(0);
             setSearchPattern(searchTerm);
         }
     };
 
-    // Handle page navigation
     const handlePageChange = (newPage) => {
         window.scrollTo(0, 0);
         setCurrentPage(newPage);
     };
 
-    // Render pagination controls
     const renderPagination = () => {
         if (totalPages <= 1) return null;
 

@@ -29,6 +29,8 @@ const HomePage = () => {
     const [ingredientsScroll, setIngredientsScroll] = useState({ left: false, right: true });
     const [dishesScroll, setDishesScroll] = useState({ left: false, right: true });
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+
 
     // Highlight input
     const searchInputRef = useRef(null);
@@ -212,7 +214,7 @@ const HomePage = () => {
         }
     };
 
-    const handleSearchSubmit = (e) => {
+    const handleSearchSubmit = async (e) => {
         e.preventDefault();
 
         let searchInput = '';
@@ -223,32 +225,55 @@ const HomePage = () => {
         if (!searchInput) return;
 
         setSearchQuery(searchInput);
+        setIsSearching(true);
 
-        const matchedDish = dishes.find(dish =>
-            dish.name?.toLowerCase().includes(searchInput.toLowerCase()) ||
-            dish.vietnameseName?.toLowerCase().includes(searchInput.toLowerCase())
-        );
+        try {
+            // Gọi API AI/text để lấy gợi ý món ăn
+            const dishResult = await aiService.getDishSuggestionByText(searchInput);
+            console.log(dishResult)
+            if (dishResult && dishResult.ingredients && dishResult.ingredients.length > 0) {
+                // Nếu API trả về kết quả món ăn hợp lệ, mở modal với dữ liệu món ăn
+                openModal('dish', {
+                    id: dishResult.id || `suggested-${Date.now()}`,
+                    name: dishResult.name || 'Món ăn đề xuất',
+                    vietnameseName: dishResult.vietnameseName || dishResult.name || 'Món ăn đề xuất',
+                    image: dishResult.imageUrl || null,
+                    ingredients: dishResult.ingredients.map(ingredient => ({
+                        id: ingredient.id,
+                        name: ingredient.name,
+                        vietnameseName: ingredient.vietnameseName || ingredient.name,
+                        image: ingredient.imageUrl,
+                        quantity: ingredient.quantity,
+                        unit: ingredient.unit,
+                        category: ingredient.category || 'Khác'
+                    })),
+                    // Thêm phần optionalIngredients
+                    optionalIngredients: dishResult.optionalIngredients ? dishResult.optionalIngredients.map(ingredient => ({
+                        id: ingredient.id,
+                        name: ingredient.name,
+                        vietnameseName: ingredient.vietnameseName || ingredient.name,
+                        image: ingredient.imageUrl,
+                        quantity: ingredient.quantity,
+                        unit: ingredient.unit,
+                        category: ingredient.category || 'Khác'
+                    })) : [],
+                    servings: dishResult.servings || 1
+                });
 
-        if (matchedDish) {
-            openModal('dish', matchedDish);
-        } else {
-            if (ingredients.length > 0) {
-                const randomIngredients = [];
-                const numIngredients = Math.floor(Math.random() * 3) + 2; // 2-4 random ingredients
-
-                for (let i = 0; i < numIngredients; i++) {
-                    const randomIndex = Math.floor(Math.random() * ingredients.length);
-                    randomIngredients.push(ingredients[randomIndex]);
-                }
-
-                openModal('search', randomIngredients, searchInput);
+                toast.success('Đã tìm thấy gợi ý món ăn!');
             } else {
-                toast.info('Không tìm thấy kết quả phù hợp.');
+                // Xử lý trường hợp không tìm thấy món ăn từ API
             }
-        }
+        } catch (error) {
+            console.error('Error getting dish suggestion:', error);
+            toast.error('Có lỗi xảy ra khi tìm kiếm món ăn. Vui lòng thử lại sau.');
+        } finally {
+            setIsSearching(false);
 
-        if (searchInputRef.current) {
-            searchInputRef.current.value = '';
+            // Reset input field
+            if (searchInputRef.current) {
+                searchInputRef.current.value = '';
+            }
         }
     };
 

@@ -20,30 +20,24 @@ const IngredientBankPage = () => {
     const [searchPattern, setSearchPattern] = useState('');
     const pageSize = 32;
 
-    // Fetch ingredients based on current page and search pattern
     const fetchIngredients = async (page, pattern) => {
         setLoading(true);
         try {
             const response = await ingredientService.getIngredients(page, pageSize, pattern);
-
-            // Assuming the API returns an object with data and metadata
             if (response) {
                 if (response.content) {
-                    // Handle paginated response format
                     setIngredients(response.content);
                     setFilteredIngredients(response.content);
                     setTotalPages(response.totalPages);
                     setTotalIngredients(response.totalElements);
                 } else {
-                    // Handle array response format
                     setIngredients(response);
                     setFilteredIngredients(response);
 
-                    // If we don't get pagination info from API, estimate it
                     if (response.length < pageSize) {
                         setTotalPages(currentPage + 1);
                     } else {
-                        setTotalPages(currentPage + 2); // At least one more page
+                        setTotalPages(currentPage + 2);
                     }
                     setTotalIngredients((currentPage + 1) * pageSize + (response.length < pageSize ? 0 : 1));
                 }
@@ -56,12 +50,10 @@ const IngredientBankPage = () => {
         }
     };
 
-    // Initial load and when page/search changes
     useEffect(() => {
         fetchIngredients(currentPage, searchPattern);
     }, [currentPage, searchPattern]);
 
-    // Filter by category (client-side)
     useEffect(() => {
         if (activeCategory === "Tất cả") {
             setFilteredIngredients(ingredients);
@@ -71,21 +63,18 @@ const IngredientBankPage = () => {
         }
     }, [activeCategory, ingredients]);
 
-    // Handle search from SearchBar component
     const handleSearch = (searchTerm) => {
         if (searchTerm !== searchPattern) {
-            setCurrentPage(0); // Reset to first page on new search
+            setCurrentPage(0);
             setSearchPattern(searchTerm);
         }
     };
 
-    // Handle page navigation
     const handlePageChange = (newPage) => {
         window.scrollTo(0, 0);
         setCurrentPage(newPage);
     };
 
-    // Render pagination controls
     const renderPagination = () => {
         if (totalPages <= 1) return null;
 

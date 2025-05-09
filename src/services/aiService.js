@@ -3,10 +3,15 @@ import axiosPrivate from './axiosPrivate';
 
 export const aiService = {
     // Gợi ý món ăn dựa trên text input
-    getDishSuggestionByText: (textInput) => {
-        return axiosPublic.post('/ai/text', { text: textInput });
+    getDishSuggestionByText: async (textInput) => {
+        try {
+            const response = await axiosPrivate.post('/ai/text', { description: textInput });
+            return response.data;
+        } catch (error) {
+            console.error("Error in dish suggestion by text API:", error);
+            throw error;
+        }
     },
-
     getDishSuggestionByImage: async (imageFile) => {
         const formData = new FormData();
         formData.append('image', imageFile);

@@ -11,8 +11,8 @@ export const BasketProvider = ({ children }) => {
         dishes: {}
     });
     const [loading, setLoading] = useState(false);
-    const [syncStatus, setSyncStatus] = useState('synced'); // 'synced', 'pending', 'error'
-    const [syncQueue, setSyncQueue] = useState([]); // Hàng đợi các thao tác cần đồng bộ
+    const [syncStatus, setSyncStatus] = useState('synced');
+    const [syncQueue, setSyncQueue] = useState([]);
 
     // Khôi phục giỏ hàng từ localStorage khi khởi tạo
     useEffect(() => {
@@ -24,7 +24,7 @@ export const BasketProvider = ({ children }) => {
                 const processedBasket = {
                     ingredients: (parsedBasket.ingredients || []).map(item => ({
                         ...item,
-                        quantity: parseFloat(item.quantity) || 0.1
+                        quantity: parseFloat(item.quantity) || 1
                     })),
                     dishes: { ...(parsedBasket.dishes || {}) }
                 };
@@ -37,7 +37,7 @@ export const BasketProvider = ({ children }) => {
                     if (dish.ingredients) {
                         dish.ingredients = dish.ingredients.map(ingredient => ({
                             ...ingredient,
-                            quantity: parseFloat(ingredient.quantity) || 0.1
+                            quantity: parseFloat(ingredient.quantity) || 1
                         }));
                     }
                 });
@@ -53,28 +53,24 @@ export const BasketProvider = ({ children }) => {
         }
     }, []);
 
-    // Cập nhật localStorage mỗi khi basketItems thay đổi
     useEffect(() => {
         if (basketItems.ingredients.length > 0 || Object.keys(basketItems.dishes).length > 0) {
             localStorage.setItem('basketItems', JSON.stringify(basketItems));
         }
     }, [basketItems]);
 
-    // Xử lý hàng đợi đồng bộ
     useEffect(() => {
         const processSyncQueue = async () => {
             if (syncQueue.length > 0 && syncStatus !== 'pending') {
                 setSyncStatus('pending');
 
                 try {
-                    // Lấy giỏ hàng hiện tại và đồng bộ với server
                     await basketService.updateBasket(basketItems);
                     setSyncStatus('synced');
-                    setSyncQueue([]); // Xóa hàng đợi sau khi đồng bộ thành công
+                    setSyncQueue([]);
                 } catch (error) {
                     console.error("Failed to sync basket with server:", error);
                     setSyncStatus('error');
-                    // Giữ lại hàng đợi để thử lại sau
                 }
             }
         };
@@ -82,7 +78,6 @@ export const BasketProvider = ({ children }) => {
         processSyncQueue();
     }, [syncQueue, syncStatus, basketItems]);
 
-    // Hàm để thêm vào hàng đợi đồng bộ
     const queueSync = () => {
         setSyncQueue(prev => [...prev, Date.now()]);
     };
@@ -123,7 +118,6 @@ export const BasketProvider = ({ children }) => {
 
             setBasketItems(updatedBasketItems);
 
-            // Thêm vào hàng đợi đồng bộ
             queueSync();
 
             setLoading(false);
@@ -144,11 +138,11 @@ export const BasketProvider = ({ children }) => {
                 servings: Math.max(1, parseInt(dishData.servings, 10) || 1),
                 ingredients: dishData.ingredients ? dishData.ingredients.map(ingredient => ({
                     ...ingredient,
-                    quantity: parseFloat(ingredient.quantity) || 0.1
+                    quantity: parseFloat(ingredient.quantity) || 1
                 })) : []
             };
 
-            const dishExists = basketItems.dishes[processedDishData.id];
+            const dishExists = basketItems.dishes[processedDishData.name];
 
             let updatedBasketItems;
 
@@ -157,7 +151,7 @@ export const BasketProvider = ({ children }) => {
                     ...basketItems,
                     dishes: {
                         ...basketItems.dishes,
-                        [processedDishData.id]: {
+                        [processedDishData.name]: {
                             ...processedDishData,
                             servings: (parseInt(dishExists.servings, 10) || 1) + processedDishData.servings
                         }
@@ -168,14 +162,13 @@ export const BasketProvider = ({ children }) => {
                     ...basketItems,
                     dishes: {
                         ...basketItems.dishes,
-                        [processedDishData.id]: processedDishData
+                        [processedDishData.name]: processedDishData
                     }
                 };
             }
 
             setBasketItems(updatedBasketItems);
 
-            // Thêm vào hàng đợi đồng bộ
             queueSync();
 
             setLoading(false);
