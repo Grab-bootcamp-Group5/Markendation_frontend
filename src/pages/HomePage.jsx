@@ -30,6 +30,8 @@ const HomePage = () => {
     const [dishesScroll, setDishesScroll] = useState({ left: false, right: true });
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+    const [isTextSearching, setIsTextSearching] = useState(false);
+    const [isImageUploading, setIsImageUploading] = useState(false);
 
 
     // Highlight input
@@ -140,7 +142,7 @@ const HomePage = () => {
 
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
-    const [isUploading, setIsUploading] = useState(false);
+    // const [isUploading, setIsUploading] = useState(false);
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -176,7 +178,7 @@ const HomePage = () => {
             return;
         }
 
-        setIsUploading(true);
+        setIsImageUploading(true);
 
         try {
             const dishResult = await aiService.getDishSuggestionByImage(selectedImage);
@@ -210,7 +212,7 @@ const HomePage = () => {
             console.error('Upload failed:', error);
             toast.error('Có lỗi xảy ra khi tải lên hình ảnh. Vui lòng thử lại sau.');
         } finally {
-            setIsUploading(false);
+            setIsImageUploading(false);
         }
     };
 
@@ -225,7 +227,7 @@ const HomePage = () => {
         if (!searchInput) return;
 
         setSearchQuery(searchInput);
-        setIsSearching(true);
+        setIsTextSearching(true); // Use text-specific loading state
 
         try {
             // Gọi API AI/text để lấy gợi ý món ăn
@@ -263,12 +265,13 @@ const HomePage = () => {
                 toast.success('Đã tìm thấy gợi ý món ăn!');
             } else {
                 // Xử lý trường hợp không tìm thấy món ăn từ API
+                toast.info('Không tìm thấy thông tin món ăn. Vui lòng thử lại với từ khóa khác.');
             }
         } catch (error) {
             console.error('Error getting dish suggestion:', error);
             toast.error('Có lỗi xảy ra khi tìm kiếm món ăn. Vui lòng thử lại sau.');
         } finally {
-            setIsSearching(false);
+            setIsTextSearching(false); // Reset text-specific loading state
 
             // Reset input field
             if (searchInputRef.current) {
@@ -338,11 +341,21 @@ const HomePage = () => {
                                         <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
                                         <button
                                             type="submit"
-                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white px-6 py-3 rounded-full flex items-center text-base hover:bg-green-700 transition-all"
+                                            disabled={isTextSearching}
+                                            className={`absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white px-6 py-3 rounded-full flex items-center text-base hover:bg-green-700 transition-all ${isTextSearching ? 'opacity-70 cursor-wait' : ''}`}
                                         >
-                                            <img src={cartIcon} alt="" className="h-5 w-5 mr-2" />
-                                            <span>Đi chợ</span>
-                                            <FiChevronRight className="ml-1" />
+                                            {isTextSearching ? (
+                                                <>
+                                                    <div className="animate-spin h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                                                    <span>Đang xử lý...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <img src={cartIcon} alt="" className="h-5 w-5 mr-2" />
+                                                    <span>Đi chợ</span>
+                                                    <FiChevronRight className="ml-1" />
+                                                </>
+                                            )}
                                         </button>
                                     </form>
                                 )}
@@ -385,12 +398,15 @@ const HomePage = () => {
                                             </div>
                                             <div className="flex items-center">
                                                 <button
-                                                    className={`bg-green-600 text-white px-6 py-4 rounded-lg flex items-center justify-center text-base hover:bg-green-700 transition-colors ${isUploading || !selectedImage ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                    className={`bg-green-600 text-white px-6 py-4 rounded-lg flex items-center justify-center text-base hover:bg-green-700 transition-colors ${isImageUploading || !selectedImage ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     onClick={handleUpload}
-                                                    disabled={isUploading || !selectedImage}
+                                                    disabled={isImageUploading || !selectedImage}
                                                 >
-                                                    {isUploading ? (
-                                                        <span>Đang tải...</span>
+                                                    {isImageUploading ? (
+                                                        <>
+                                                            <div className="animate-spin h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                                                            <span>Đang xử lý...</span>
+                                                        </>
                                                     ) : (
                                                         <>
                                                             <img src={cartIcon} alt="" className="h-5 w-5 mr-2" />
