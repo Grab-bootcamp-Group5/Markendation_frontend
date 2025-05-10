@@ -3,12 +3,9 @@ import { FiMapPin, FiNavigation, FiX, FiSearch } from "react-icons/fi";
 import { userService } from '../services/userService';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-
-// Fix icon issues in Leaflet with webpack
-// Nếu sử dụng Create React App hoặc webpack, thêm đoạn code này
-// để khắc phục vấn đề về icon của Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import { toast } from 'react-toastify';
 
 let DefaultIcon = L.icon({
     iconUrl: icon,
@@ -19,7 +16,6 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// OpenStreetMap component sử dụng class component thay thế cho GoogleMap
 class OpenStreetMap extends Component {
     constructor(props) {
         super(props);
@@ -33,7 +29,6 @@ class OpenStreetMap extends Component {
     }
 
     componentWillUnmount() {
-        // Dọn dẹp map khi component unmount
         if (this.mapInstance) {
             this.mapInstance.remove();
         }
@@ -45,7 +40,6 @@ class OpenStreetMap extends Component {
         const { latitude, longitude } = this.props.initialLocation;
         const position = [latitude, longitude];
 
-        // Tạo map instance với Leaflet
         const map = L.map(this.mapRef.current).setView(position, 14);
 
         // Thêm tile layer từ OpenStreetMap
@@ -55,14 +49,12 @@ class OpenStreetMap extends Component {
 
         this.mapInstance = map;
 
-        // Tạo marker
         const marker = L.marker(position, {
             draggable: true
         }).addTo(map);
 
         this.marker = marker;
 
-        // Thêm event listeners
         map.on('click', (event) => {
             const { lat, lng } = event.latlng;
             marker.setLatLng([lat, lng]);
@@ -324,13 +316,16 @@ class LocationSelector extends Component {
 
             const token = localStorage.getItem('accessToken');
             if (!token) {
-                console.log('User not logged in, skipping API call');
                 return { success: true, message: 'User not logged in' };
             }
 
             const result = await userService.updateUserLocation(locationData);
-            console.log('Location updated successfully:', result);
-
+            console.log('API response: ', result)
+            if (result && result.status == 202) {
+                toast.success("Địa chỉ đã được cập nhật thành công!");
+            } else {
+                toast.error("Không cập nhật được địa chỉ. Vui lòng thử lại sau!");
+            }
             return result;
 
         } catch (error) {

@@ -15,7 +15,7 @@ export const userService = {
     updateUserLocation: async (locationData) => {
         try {
             const response = await axiosPrivate.post('/user/location', locationData);
-            return response.data;
+            return response;
         } catch (error) {
             throw error;
         }

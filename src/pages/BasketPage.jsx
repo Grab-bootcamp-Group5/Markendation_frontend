@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Link, useNavigate } from 'react-router-dom';
 import { HiOutlineCalculator } from "react-icons/hi";
+import { FiPlusCircle } from "react-icons/fi";
 import BasketHeader from '../components/basket/BasketHeader';
 import IngredientSection from '../components/basket/IngredientSection';
 import DishSection from '../components/basket/DishSection';
@@ -311,16 +312,36 @@ const BasketPage = () => {
                             />
                         )}
 
-                        {/* Checkout Button */}
-                        <div className="py-4 flex justify-center border-t border-gray-200 mt-4">
-                            <button
-                                onClick={handleCalculateCart}
-                                className="bg-green-600 text-white px-6 py-2 flex items-center justify-center rounded-md"
-                                disabled={calculating || syncStatus === 'pending'}
-                            >
-                                <HiOutlineCalculator className="w-5 h-5 mr-2" />
-                                {calculating ? "Đang tính toán..." : "Bắt đầu tính toán"}
-                            </button>
+                        {/* Checkout Button Section */}
+                        <div className="p-4 flex justify-between items-center gap-4 border-t border-gray-200 mt-4">
+                            {/* Left side - Add buttons for navigation */}
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <Link
+                                    to="/dishes-bank"
+                                    className="bg-orange-500 text-white px-6 py-2 flex items-center justify-center rounded-md hover:bg-orange-600 transition-colors"
+                                >
+                                    <FiPlusCircle className="h-5 w-5 mr-2" /> Thêm món ăn
+                                </Link>
+
+                                <Link
+                                    to="/ingredients-bank"
+                                    className="bg-blue-500 text-white px-6 py-2 flex items-center justify-center rounded-md hover:bg-blue-600 transition-colors"
+                                >
+                                    <FiPlusCircle className="h-5 w-5 mr-2" /> Thêm nguyên liệu
+                                </Link>
+                            </div>
+
+                            {/* Right side - Highlighted calculation button */}
+                            <div>
+                                <button
+                                    onClick={handleCalculateCart}
+                                    className="bg-green-600 text-white px-8 py-3 font-bold flex items-center justify-center rounded-md hover:bg-green-700 transition-colors shadow-lg transform hover:scale-105 border-2 border-green-400"
+                                    disabled={calculating}
+                                >
+                                    <HiOutlineCalculator className="h-6 w-6 mr-2" />
+                                    {calculating ? "Đang tính toán..." : "Bắt đầu tính toán"}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

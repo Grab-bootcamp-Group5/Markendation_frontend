@@ -98,6 +98,20 @@ const CheckoutCalculation = () => {
                     };
                 })
                 : [];
+
+            // Process lackIngredients data
+            const lackIngredients = Array.isArray(storeItem.lackIngredients)
+                ? storeItem.lackIngredients.map(ingredient => ({
+                    id: ingredient.id || `ingredient-${Math.random().toString(36).substring(2, 9)}`,
+                    vietnameseName: ingredient.vietnameseName || "",
+                    name: ingredient.name || "Nguyên liệu",
+                    image: ingredient.image || null,
+                    quantity: ingredient.quantity || 0,
+                    unit: ingredient.unit || "g",
+                    category: ingredient.category || "Khác"
+                }))
+                : [];
+
             let totalCost = storeItem.totalCost || 0;
             if (totalCost === 0 && products.length > 0) {
                 totalCost = products.reduce((sum, product) => sum + (product.cost || 0), 0);
@@ -128,6 +142,7 @@ const CheckoutCalculation = () => {
                 totalPrice: totalCost,
                 products: products,
                 productsByCategory: productsByCategory,
+                lackIngredients: lackIngredients, // Add missing ingredients
                 city: storeInfo.city || "",
                 ward: storeInfo.ward || "",
                 district: storeInfo.district || "",
@@ -364,6 +379,47 @@ const CheckoutCalculation = () => {
                                                 <span>Tổng Giá:</span>
                                                 <span className="text-xl">{formatPrice(store.totalPrice)}VND</span>
                                             </div>
+
+                                            {/* Missing Ingredients Warning Section */}
+                                            {store.lackIngredients && store.lackIngredients.length > 0 && (
+                                                <div className="mb-4 border border-yellow-300 bg-yellow-50 rounded-lg p-3">
+                                                    <div className="flex items-center mb-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                        </svg>
+                                                        <h4 className="text-base font-bold text-yellow-700">Nguyên liệu thiếu</h4>
+                                                    </div>
+                                                    <p className="text-sm text-yellow-700 mb-2">Cửa hàng này không có đủ các nguyên liệu sau:</p>
+                                                    <div className="pl-2 space-y-2">
+                                                        {store.lackIngredients.map((item, index) => (
+                                                            <div key={index} className="flex items-center bg-white p-2 rounded border border-yellow-200">
+                                                                {item.image && (
+                                                                    <div className="w-10 h-10 flex-shrink-0 mr-3 bg-white rounded p-1">
+                                                                        <img
+                                                                            src={item.image}
+                                                                            alt={item.vietnameseName || item.name}
+                                                                            className="w-full h-full object-contain"
+                                                                            onError={(e) => {
+                                                                                e.target.onerror = null;
+                                                                                e.target.src = '/images/default-ingredient.jpg';
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex-1">
+                                                                    <div className="font-medium text-gray-800">{item.vietnameseName || item.name}</div>
+                                                                    <div className="text-sm text-gray-600">
+                                                                        <span className="font-medium">{item.quantity}</span> {item.unit}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <div className="mt-3 text-sm text-yellow-700">
+                                                        Bạn có thể cần tìm kiếm những nguyên liệu này ở cửa hàng khác.
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             {/* Toggle button for store details */}
                                             <button
