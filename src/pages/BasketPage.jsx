@@ -181,7 +181,6 @@ const BasketPage = () => {
             if (syncStatus !== 'synced') {
                 await updateBasket();
             }
-
             const result = await basketService.saveFavoriteBasket();
 
             if (result) {

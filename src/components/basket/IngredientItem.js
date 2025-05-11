@@ -9,7 +9,7 @@ const IngredientItem = ({
             <div className="flex items-center w-[40%]">
                 <div className="bg-white p-3 rounded-md shadow-md flex justify-center items-center h-28 w-28 ml-4 mr-4">
                     <img
-                        src={item.image}
+                        src={item.imageUrl}
                         alt={item.name}
                         className="h-24 w-24 object-contain"
                     />

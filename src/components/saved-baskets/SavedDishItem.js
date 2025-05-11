@@ -9,10 +9,10 @@ const SavedDishItem = ({ dish }) => {
         <div className="mb-4 bg-gray-50 rounded-lg overflow-hidden shadow-sm">
             <div className="py-3 px-4 flex items-center justify-between">
                 <div className="flex items-center">
-                    {dish.image && (
+                    {dish.imageUrl && (
                         <div className="mr-4 h-16 w-16 rounded-md overflow-hidden flex-shrink-0 shadow-sm">
                             <img
-                                src={dish.image}
+                                src={dish.imageUrl}
                                 alt={dish.name || dish.vietnameseName}
                                 className="h-full w-full object-cover"
                                 onError={(e) => {
@@ -45,9 +45,8 @@ const SavedDishItem = ({ dish }) => {
                     {dish.ingredients && dish.ingredients.length > 0 ? (
                         dish.ingredients.map((ingredient) => (
                             <SavedBasketItem
-                                key={`${dish.id}-${ingredient.id}`}
+                                key={ingredient.id}
                                 item={ingredient}
-                                type="dish-ingredient"
                             />
                         ))
                     ) : (

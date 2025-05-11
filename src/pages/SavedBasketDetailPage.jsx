@@ -25,8 +25,8 @@ const SavedBasketDetailPage = () => {
     const fetchSavedBasket = async () => {
         try {
             setLoading(true);
-            // Lấy danh sách giỏ hàng đã lưu và tìm giỏ hàng cụ thể theo id
             const savedBaskets = await basketService.getSavedBaskets();
+            console.log('data from details page: ', savedBaskets)
             const foundBasket = savedBaskets.find((basket, index) => index === parseInt(basketId));
 
             if (foundBasket) {
@@ -145,7 +145,7 @@ const SavedBasketDetailPage = () => {
                     )}
 
                     {/* Dishes Section */}
-                    {basket.dishes && Object.keys(basket.dishes).length > 0 && (
+                    {basket.dishes && basket.dishes.length > 0 && (
                         <SavedDishSection dishes={basket.dishes} />
                     )}
 

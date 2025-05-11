@@ -29,7 +29,6 @@ const HomePage = () => {
     const [ingredientsScroll, setIngredientsScroll] = useState({ left: false, right: true });
     const [dishesScroll, setDishesScroll] = useState({ left: false, right: true });
     const [searchQuery, setSearchQuery] = useState('');
-    const [isSearching, setIsSearching] = useState(false);
     const [isTextSearching, setIsTextSearching] = useState(false);
     const [isImageUploading, setIsImageUploading] = useState(false);
 
@@ -142,7 +141,6 @@ const HomePage = () => {
 
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
-    // const [isUploading, setIsUploading] = useState(false);
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];

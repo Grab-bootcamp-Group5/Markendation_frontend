@@ -47,10 +47,10 @@ const DishItem = ({
         <div className="mb-4 bg-gray-50 rounded-lg overflow-hidden shadow-sm">
             <div className="py-4 px-5 flex items-center">
                 <div className="flex items-center">
-                    {dish.image && (
+                    {dish.imageUrl && (
                         <div className="mr-4 h-16 w-16 rounded-md overflow-hidden flex-shrink-0 shadow-sm">
                             <img
-                                src={dish.image}
+                                src={dish.imageUrl}
                                 alt={dish.name}
                                 className="h-full w-full object-cover"
                             />

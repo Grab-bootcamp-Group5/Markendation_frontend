@@ -2,7 +2,7 @@ import React from 'react';
 
 const IngredientCategories = ({ activeCategory, setActiveCategory }) => {
     const categories = [
-        "Tất cả", "Fresh Meat", "Grains & Staples", 'Seasonings', "Vegetables", 'Cold Cuts: Sausages & Ham', "Ice Cream & Cheese", "Snacks"
+        "Tất cả", "Fresh Meat", "Grains & Staples", 'Seasonings', "Vegetables", 'Cold Cuts: Sausages & Ham', "Ice Cream & Cheese", 'Instant Foods'
     ];
 
     return (

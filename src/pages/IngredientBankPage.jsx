@@ -24,23 +24,16 @@ const IngredientBankPage = () => {
         setLoading(true);
         try {
             const response = await ingredientService.getIngredients(page, pageSize, pattern);
-            if (response) {
-                if (response.content) {
-                    setIngredients(response.content);
-                    setFilteredIngredients(response.content);
-                    setTotalPages(response.totalPages);
-                    setTotalIngredients(response.totalElements);
-                } else {
-                    setIngredients(response);
-                    setFilteredIngredients(response);
 
-                    if (response.length < pageSize) {
-                        setTotalPages(currentPage + 1);
-                    } else {
-                        setTotalPages(currentPage + 2);
-                    }
-                    setTotalIngredients((currentPage + 1) * pageSize + (response.length < pageSize ? 0 : 1));
-                }
+            if (response) {
+                // Set ingredients from response.ingredients array
+                setIngredients(response.ingredients);
+                setFilteredIngredients(response.ingredients);
+
+                // Calculate total pages based on numIngredients
+                const calculatedTotalPages = Math.ceil(response.numIngredients / pageSize);
+                setTotalPages(calculatedTotalPages);
+                setTotalIngredients(response.numIngredients);
             }
             setLoading(false);
         } catch (error) {

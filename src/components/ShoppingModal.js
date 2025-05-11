@@ -82,7 +82,7 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                         id: ingredient.id || `ingredient-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                         name: ingredient.name,
                         vietnameseName: ingredient.vietnameseName || ingredient.name,
-                        image: ingredient.imageUrl || ingredient.image,
+                        imageUrl: ingredient.imageUrl || ingredient.image,
                         quantity: ingredient.quantity,
                         unit: ingredient.unit || 'g',
                         category: ingredient.category || 'Khác'
@@ -95,7 +95,7 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                         id: ingredient.id || `ingredient-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                         name: ingredient.name,
                         vietnameseName: ingredient.vietnameseName || ingredient.name,
-                        image: ingredient.imageUrl || ingredient.image,
+                        imageUrl: ingredient.imageUrl || ingredient.image,
                         quantity: ingredient.quantity,
                         unit: ingredient.unit || 'g',
                         category: ingredient.category || 'Khác'
@@ -108,7 +108,7 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                     id: dishWithIngredients.id || `dish-${Date.now()}`,
                     name: dishWithIngredients.name,
                     vietnameseName: dishWithIngredients.vietnameseName || dishWithIngredients.name,
-                    image: dishWithIngredients.imageUrl || dishWithIngredients.image,
+                    imageUrl: dishWithIngredients.imageUrl || dishWithIngredients.image,
                     servings: quantity,
                     ingredients: allSelectedIngredients
                 };

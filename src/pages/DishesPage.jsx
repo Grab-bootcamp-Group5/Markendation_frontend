@@ -21,23 +21,16 @@ const DishesPage = () => {
         setLoading(true);
         try {
             const response = await dishService.getDishes(page, pageSize, pattern);
-            if (response) {
-                if (response.content) {
-                    setDishes(response.content);
-                    setFilteredDishes(response.content);
-                    setTotalPages(response.totalPages);
-                    setTotalDishes(response.totalElements);
-                } else {
-                    setDishes(response);
-                    setFilteredDishes(response);
 
-                    if (response.length < pageSize) {
-                        setTotalPages(currentPage + 1);
-                    } else {
-                        setTotalPages(currentPage + 2);
-                    }
-                    setTotalDishes((currentPage + 1) * pageSize + (response.length < pageSize ? 0 : 1));
-                }
+            if (response) {
+                // Set dishes from response.dishes array
+                setDishes(response.dishes);
+                setFilteredDishes(response.dishes);
+
+                // Calculate total pages based on numDishes
+                const calculatedTotalPages = Math.ceil(response.numDishes / pageSize);
+                setTotalPages(calculatedTotalPages);
+                setTotalDishes(response.numDishes);
             }
             setLoading(false);
         } catch (error) {

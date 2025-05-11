@@ -82,10 +82,10 @@ export const basketService = {
         try {
             const storedBasket = localStorage.getItem('basketItems');
             let basketData = storedBasket ? JSON.parse(storedBasket) : { ingredients: [], dishes: {} };
-
             const formattedBasketData = formatBasketData(basketData);
-
+            console.log('Send data: ', formattedBasketData)
             const response = await axiosPrivate.post('/basket/save', formattedBasketData);
+            console.log('Response: ', response)
             return response.data;
         } catch (error) {
             console.error("Error saving favorite basket:", error);

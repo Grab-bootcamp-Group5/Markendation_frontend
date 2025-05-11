@@ -22,7 +22,7 @@ const SavedDishSection = ({ dishes }) => {
                 <div className="pt-4 pb-4 px-6">
                     {dishesArray.length > 0 ? (
                         dishesArray.map((dish) => (
-                            <SavedDishItem key={dish.id} dish={dish} />
+                            <SavedDishItem key={dish.name} dish={dish} />
                         ))
                     ) : (
                         <div className="text-center py-4">
