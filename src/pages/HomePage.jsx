@@ -12,6 +12,7 @@ import { dishService } from '../services/dishService';
 import { restaurantsList } from '../assets/assets';
 import { toast } from 'react-toastify';
 import { aiService } from '../services/aiService';
+import { LuGoal, LuCamera, LuBrain } from "react-icons/lu";
 
 const HomePage = () => {
     const [ingredients, setIngredients] = useState([]);
@@ -35,7 +36,7 @@ const HomePage = () => {
 
     // Highlight input
     const searchInputRef = useRef(null);
-    const [activeTab, setActiveTab] = useState('text'); // 'text' or 'image'
+    const [activeTab, setActiveTab] = useState('text');
 
     // Fetch ingredients from API
     useEffect(() => {
@@ -44,8 +45,8 @@ const HomePage = () => {
                 setLoadingIngredients(true);
                 const response = await ingredientService.getIngredients(0, 12);
 
-                if (Array.isArray(response)) {
-                    setIngredients(response);
+                if (Array.isArray(response.ingredients)) {
+                    setIngredients(response.ingredients);
                 } else {
                     setIngredients([]);
                 }
@@ -67,8 +68,8 @@ const HomePage = () => {
                 setLoadingDishes(true);
                 const response = await dishService.getDishes(0, 12);
 
-                if (Array.isArray(response)) {
-                    setDishes(response);
+                if (Array.isArray(response.dishes)) {
+                    setDishes(response.dishes);
                 } else {
                     setDishes([]);
                 }
@@ -225,14 +226,12 @@ const HomePage = () => {
         if (!searchInput) return;
 
         setSearchQuery(searchInput);
-        setIsTextSearching(true); // Use text-specific loading state
+        setIsTextSearching(true);
 
         try {
-            // Gọi API AI/text để lấy gợi ý món ăn
             const dishResult = await aiService.getDishSuggestionByText(searchInput);
             console.log(dishResult)
             if (dishResult && dishResult.ingredients && dishResult.ingredients.length > 0) {
-                // Nếu API trả về kết quả món ăn hợp lệ, mở modal với dữ liệu món ăn
                 openModal('dish', {
                     id: dishResult.id || `suggested-${Date.now()}`,
                     name: dishResult.name || 'Món ăn đề xuất',
@@ -262,16 +261,14 @@ const HomePage = () => {
 
                 toast.success('Đã tìm thấy gợi ý món ăn!');
             } else {
-                // Xử lý trường hợp không tìm thấy món ăn từ API
                 toast.info('Không tìm thấy thông tin món ăn. Vui lòng thử lại với từ khóa khác.');
             }
         } catch (error) {
             console.error('Error getting dish suggestion:', error);
             toast.error('Có lỗi xảy ra khi tìm kiếm món ăn. Vui lòng thử lại sau.');
         } finally {
-            setIsTextSearching(false); // Reset text-specific loading state
+            setIsTextSearching(false);
 
-            // Reset input field
             if (searchInputRef.current) {
                 searchInputRef.current.value = '';
             }
@@ -430,13 +427,16 @@ const HomePage = () => {
                 {/* Featured badges */}
                 <div className="flex flex-wrap gap-4 mb-8 justify-center">
                     <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full flex items-center">
-                        <span className="font-medium">🎯 Dự đoán thông minh</span>
+                        <LuGoal className='w-5 h-5 me-1' />
+                        <span className="font-medium"> Dự đoán thông minh</span>
                     </div>
                     <div className="bg-green-100 text-green-800 px-4 py-2 rounded-full flex items-center">
-                        <span className="font-medium">📷 Nhận diện hình ảnh</span>
+                        <LuCamera className='w-5 h-5 me-1' />
+                        <span className="font-medium"> Nhận diện hình ảnh</span>
                     </div>
                     <div className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full flex items-center">
-                        <span className="font-medium">🧠 Gợi ý nguyên liệu</span>
+                        <LuBrain className='w-5 h-5 me-1' />
+                        <span className="font-medium"> Gợi ý nguyên liệu</span>
                     </div>
                 </div>
 

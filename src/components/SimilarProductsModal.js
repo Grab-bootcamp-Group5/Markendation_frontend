@@ -76,7 +76,7 @@ const SimilarProductsModal = ({
                                     <span className="text-green-600 font-medium">
                                         {formatPrice ? formatPrice(product?.cost) : product?.cost}đ
                                     </span>
-                                    <span className="text-gray-500">{product?.quantity} {product?.unit}</span>
+                                    <span className="text-gray-500">{product?.quantity} x {product?.unit}</span>
                                 </div>
                             </div>
                         </div>
@@ -115,7 +115,7 @@ const SimilarProductsModal = ({
                                                 {formatPrice ? formatPrice(similarProduct.cost) : similarProduct.cost}đ
                                             </span>
                                             <span className="text-gray-500">
-                                                {similarProduct.quantity} {similarProduct.unit}
+                                                {similarProduct.quantity} x {similarProduct.unit}
                                             </span>
                                         </div>
                                     </div>

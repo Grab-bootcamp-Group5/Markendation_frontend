@@ -90,8 +90,8 @@ const CheckoutCalculation = () => {
             // Process main products
             const products = Array.isArray(storeItem.products)
                 ? storeItem.products.map(product => {
-                    const productData = product.product || product;
-
+                    const productData = product.product;
+                    console.log('product', productData.unit)
                     return {
                         id: productData.id || `product-${Math.random().toString(36).substring(2, 9)}`,
                         name: productData.name || "Sản phẩm",
@@ -100,7 +100,7 @@ const CheckoutCalculation = () => {
                         image: productData.image || null,
                         price: productData.price || 0,
                         quantity: product.quantity || 1,
-                        unit: productData.unit || "cái",
+                        unit: productData.unit,
                         cost: product.cost || (productData.price * (product.quantity || 1)) || 0,
                         sku: productData.sku || "",
                         category: productData.category || "Khác",
@@ -123,7 +123,7 @@ const CheckoutCalculation = () => {
                         image: productData.image || null,
                         price: productData.price || 0,
                         quantity: product.quantity || 1,
-                        unit: productData.unit || "cái",
+                        unit: productData.unit,
                         cost: product.cost || (productData.price * (product.quantity || 1)) || 0,
                         sku: productData.sku || "",
                         category: productData.category || "Khác",
@@ -150,7 +150,7 @@ const CheckoutCalculation = () => {
                     name: ingredient.name || "Nguyên liệu",
                     image: ingredient.image || null,
                     quantity: ingredient.quantity || 0,
-                    unit: ingredient.unit || "g",
+                    unit: ingredient.unit,
                     category: ingredient.category || "Khác"
                 }))
                 : [];
@@ -228,7 +228,7 @@ const CheckoutCalculation = () => {
                     combined[item.id] = {
                         ...item,
                         totalQuantity: parseFloat(item.quantity) || 0.1,
-                        unit: item.unit || 'g'
+                        unit: item.unit
                     };
                 } else {
                     combined[item.id].totalQuantity += parseFloat(item.quantity) || 0.1;
@@ -246,7 +246,7 @@ const CheckoutCalculation = () => {
                             combined[item.id] = {
                                 ...item,
                                 totalQuantity: (parseFloat(item.quantity) || 0.1) * servings,
-                                unit: item.unit || 'g'
+                                unit: item.unit
                             };
                         } else {
                             combined[item.id].totalQuantity += (parseFloat(item.quantity) || 0.1) * servings;
@@ -431,7 +431,7 @@ const CheckoutCalculation = () => {
                         {formatProductName(product)}
                         <div className="flex justify-between text-sm mt-1">
                             <span className="text-green-600 font-medium">{formatPrice(product.cost)}VND</span>
-                            <span className="text-gray-500">{product.quantity} {product.unit}</span>
+                            <span className="text-gray-500">{product.quantity} x {product.unit}</span>
                         </div>
                     </div>
 
@@ -440,7 +440,7 @@ const CheckoutCalculation = () => {
                         <div className="ml-2">
                             <button
                                 onClick={() => openSimilarProductsModal(product, store)}
-                                className={`p-1.5 rounded-full ${isAlternative ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-600'} hover:bg-gray-200`}
+                                className={`p-1.5 rounded-full ${isAlternative ? 'bg-orange-100 text-orange-600' : 'bg-green-600 text-white'} hover:bg-green-200`}
                                 title="Xem sản phẩm tương tự"
                             >
                                 <HiSwitchHorizontal className="w-4 h-4" />
