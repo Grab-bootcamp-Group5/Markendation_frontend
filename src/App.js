@@ -1,24 +1,46 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import IngredientBankPage from './pages/IngredientBankPage';
+import BasketPage from './pages/BasketPage';
+import DishesPage from './pages/DishesPage';
+import HomePage from './pages/HomePage';
+import SavedBasketPage from './pages/SavedBasketPage';
+import SavedBasketDetailPage from './pages/SavedBasketDetailPage';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import LoginForm from './components/LoginForm';
+import RegisterForm from './components/RegisterForm';
+import { ModalProvider } from './context/ModalContext';
+import { BasketProvider } from './context/BasketContext';
+
+import CheckoutCalculation from './pages/CheckoutCalculationPage';
+import DistanceCalculator from './pages/DistanceCalculator';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <BasketProvider>
+        <ModalProvider>
+          <div className="font-sans">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/homepage" element={<HomePage />} />
+              <Route path="/ingredients-bank" element={<IngredientBankPage />} />
+              <Route path="/dishes-bank" element={<DishesPage />} />
+              <Route path="/basket" element={<BasketPage />} />
+              <Route path="/saved-baskets" element={<SavedBasketPage />} />
+              <Route path="/saved-baskets/:basketId" element={<SavedBasketDetailPage />} />
+              <Route path='/login' element={<LoginForm />} />
+              <Route path='/register' element={<RegisterForm />} />
+              <Route path='/calculate' element={<CheckoutCalculation />} />
+              <Route path='/distance' element={<DistanceCalculator />} />
+            </Routes>
+            <ToastContainer
+              position="bottom-right" />
+          </div>
+        </ModalProvider>
+      </BasketProvider>
+    </BrowserRouter>
   );
 }
 
