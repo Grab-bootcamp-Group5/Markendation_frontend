@@ -15,7 +15,6 @@ import { toast } from 'react-toastify';
 const BasketPage = () => {
     const navigate = useNavigate();
 
-    // Sử dụng BasketContext
     const {
         basketItems,
         loading,
@@ -92,7 +91,6 @@ const BasketPage = () => {
         }
     };
 
-    // Hàm xóa item
     const handleRemoveItem = async (id, isDishIngredient = false, dishId = null) => {
         try {
             let updatedBasketItems = { ...basketItems };
@@ -145,7 +143,6 @@ const BasketPage = () => {
         }
     };
 
-    // Cập nhật số phần ăn của món ăn
     const handleUpdateDishServings = async (dishId, newServings) => {
         try {
             let updatedBasketItems = { ...basketItems };
@@ -175,7 +172,6 @@ const BasketPage = () => {
         }
     };
 
-    // Lưu giỏ hàng yêu thích
     const saveFavoriteCart = async () => {
         try {
             if (syncStatus !== 'synced') {
@@ -194,7 +190,6 @@ const BasketPage = () => {
         }
     };
 
-    // Hàm tính toán giỏ hàng
     const handleCalculateCart = async () => {
         try {
             setCalculating(true);
@@ -216,7 +211,6 @@ const BasketPage = () => {
         }
     };
 
-    // Tính tổng số mục trong giỏ hàng
     const totalItemCount = () => {
         if (!basketItems) return 0;
 
@@ -232,7 +226,6 @@ const BasketPage = () => {
         return ingredientCount + dishIngredientsCount;
     };
 
-    // Hiển thị trạng thái đồng bộ
     const renderSyncStatus = () => {
         if (syncStatus === 'pending') {
             return (
@@ -313,7 +306,6 @@ const BasketPage = () => {
 
                         {/* Checkout Button Section */}
                         <div className="p-4 flex justify-between items-center gap-4 border-t border-gray-200 mt-4">
-                            {/* Left side - Add buttons for navigation */}
                             <div className="flex flex-col sm:flex-row gap-2">
                                 <Link
                                     to="/dishes-bank"
@@ -330,7 +322,6 @@ const BasketPage = () => {
                                 </Link>
                             </div>
 
-                            {/* Right side - Highlighted calculation button */}
                             <div>
                                 <button
                                     onClick={handleCalculateCart}

@@ -42,7 +42,6 @@ class OpenStreetMap extends Component {
 
         const map = L.map(this.mapRef.current).setView(position, 14);
 
-        // Thêm tile layer từ OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
@@ -69,7 +68,6 @@ class OpenStreetMap extends Component {
 
     getAddressFromLatLng = async (lat, lng) => {
         try {
-            // Sử dụng API Nominatim của OpenStreetMap để reverse geocoding
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
             const data = await response.json();
 
@@ -81,7 +79,6 @@ class OpenStreetMap extends Component {
                     address
                 });
             } else {
-                // Nếu không tìm thấy địa chỉ, sử dụng tọa độ
                 this.props.onLocationSelect({
                     latitude: lat,
                     longitude: lng,
@@ -105,7 +102,6 @@ class OpenStreetMap extends Component {
         this.marker.setLatLng([lat, lng]);
     }
 
-    // Cung cấp phương thức cho parent component
     getMapInstance = () => {
         return this.mapInstance;
     }
@@ -172,7 +168,6 @@ class LocationSelector extends Component {
                 console.log("Vị trí hiện tại:", latitude, longitude);
 
                 try {
-                    // Sử dụng API Nominatim của OpenStreetMap để reverse geocoding
                     const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
                     const data = await response.json();
 
@@ -255,7 +250,6 @@ class LocationSelector extends Component {
         this.setState({ isSearching: true, error: '', searchResults: [] });
 
         try {
-            // Sử dụng Nominatim API của OpenStreetMap để tìm kiếm địa điểm
             const encodedQuery = encodeURIComponent(searchQuery);
             const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&limit=5`);
 
@@ -300,7 +294,6 @@ class LocationSelector extends Component {
             searchQuery: ''
         });
 
-        // Update map view
         if (this.mapRef.current) {
             this.mapRef.current.centerMap(result.latitude, result.longitude);
         }

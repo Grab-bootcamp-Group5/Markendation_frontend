@@ -7,20 +7,13 @@ const Navbar = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Kiểm tra trạng thái đăng nhập mỗi khi component được render
         const token = localStorage.getItem('accessToken');
         setIsLoggedIn(!!token);
     }, []);
 
     const handleLogout = () => {
-        // Xóa token khỏi localStorage
         localStorage.removeItem('accessToken');
-        // Không xóa giỏ hàng để giữ lại dữ liệu mua sắm
-
-        // Cập nhật trạng thái đăng nhập
         setIsLoggedIn(false);
-
-        // Chuyển hướng về trang chính
         navigate('/homepage');
     };
 

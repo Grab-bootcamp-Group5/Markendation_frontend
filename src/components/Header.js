@@ -8,11 +8,9 @@ import { toast } from 'react-toastify';
 
 const Header = ({ basketCount }) => {
     const [userLocation, setUserLocation] = useState(null);
-    // Sử dụng BasketContext để cập nhật giỏ hàng
     const { updateBasket, basketItems, syncStatus, getTotalItemCount } = useBasket();
 
     useEffect(() => {
-        // Load saved location from localStorage if available
         const loadSavedLocation = () => {
             try {
                 const savedLocation = localStorage.getItem('userLocation');
@@ -27,7 +25,6 @@ const Header = ({ basketCount }) => {
                 console.error('Error loading saved location:', error);
             }
 
-            // Default location as fallback
             setUserLocation({
                 address: 'Regent Street, A4, A4201, London',
                 latitude: 51.5093,
@@ -37,7 +34,6 @@ const Header = ({ basketCount }) => {
 
         loadSavedLocation();
 
-        // Set up event listeners
         const handleLocationUpdate = (event) => {
             if (event.detail) {
                 setUserLocation(event.detail);
@@ -45,8 +41,6 @@ const Header = ({ basketCount }) => {
         };
 
         window.addEventListener('locationUpdated', handleLocationUpdate);
-
-        // Clean up
         return () => {
             window.removeEventListener('locationUpdated', handleLocationUpdate);
         };
@@ -57,7 +51,6 @@ const Header = ({ basketCount }) => {
         setUserLocation(location);
     };
 
-    // Hàm xử lý cập nhật giỏ hàng lên server
     const handleForceSync = async () => {
         try {
             const result = await updateBasket();
@@ -72,7 +65,6 @@ const Header = ({ basketCount }) => {
         }
     };
 
-    // Hiển thị biểu tượng trạng thái đồng bộ
     const renderSyncIcon = () => {
         if (syncStatus === 'pending') {
             return (
@@ -91,7 +83,6 @@ const Header = ({ basketCount }) => {
         }
     };
 
-    // Tính tổng số sản phẩm trong giỏ hàng
     const getItemCount = () => {
         if (basketCount !== undefined) {
             return basketCount;

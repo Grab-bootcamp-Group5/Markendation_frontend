@@ -26,11 +26,9 @@ const IngredientBankPage = () => {
             const response = await ingredientService.getIngredients(page, pageSize, pattern);
 
             if (response) {
-                // Set ingredients from response.ingredients array
                 setIngredients(response.ingredients);
                 setFilteredIngredients(response.ingredients);
 
-                // Calculate total pages based on numIngredients
                 const calculatedTotalPages = Math.ceil(response.numIngredients / pageSize);
                 setTotalPages(calculatedTotalPages);
                 setTotalIngredients(response.numIngredients);
@@ -213,7 +211,6 @@ const IngredientBankPage = () => {
                                 ))}
                             </div>
 
-                            {/* Show pagination for all ingredients or when searching */}
                             {(activeCategory === "Tất cả" || searchPattern) && renderPagination()}
                         </>
                     ) : (

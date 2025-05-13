@@ -23,11 +23,9 @@ const DishesPage = () => {
             const response = await dishService.getDishes(page, pageSize, pattern);
 
             if (response) {
-                // Set dishes from response.dishes array
                 setDishes(response.dishes);
                 setFilteredDishes(response.dishes);
 
-                // Calculate total pages based on numDishes
                 const calculatedTotalPages = Math.ceil(response.numDishes / pageSize);
                 setTotalPages(calculatedTotalPages);
                 setTotalDishes(response.numDishes);

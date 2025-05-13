@@ -87,7 +87,6 @@ const CheckoutCalculation = () => {
         const formattedStores = storeData.map(storeItem => {
             const storeInfo = storeItem.store || {};
 
-            // Process main products
             const products = Array.isArray(storeItem.products)
                 ? storeItem.products.map(product => {
                     const productData = product.product;
@@ -110,7 +109,6 @@ const CheckoutCalculation = () => {
                 })
                 : [];
 
-            // Process similar products
             const similarProducts = Array.isArray(storeItem.similarProducts)
                 ? storeItem.similarProducts.map(product => {
                     const productData = product.product || product;
@@ -133,7 +131,6 @@ const CheckoutCalculation = () => {
                 })
                 : [];
 
-            // Group similar products by productIndex for easier access
             const similarProductsByIndex = {};
             similarProducts.forEach(product => {
                 if (!similarProductsByIndex[product.productIndex]) {
@@ -142,7 +139,6 @@ const CheckoutCalculation = () => {
                 similarProductsByIndex[product.productIndex].push(product);
             });
 
-            // Process lackIngredients data
             const lackIngredients = Array.isArray(storeItem.lackIngredients)
                 ? storeItem.lackIngredients.map(ingredient => ({
                     id: ingredient.id || `ingredient-${Math.random().toString(36).substring(2, 9)}`,
@@ -209,7 +205,6 @@ const CheckoutCalculation = () => {
         console.log("Processed store list:", formattedStores);
         setSuggestedStores(formattedStores);
 
-        // Initialize the active category tab for each store
         const initialActiveTabs = {};
         formattedStores.forEach(store => {
             if (store.productsByCategory && Object.keys(store.productsByCategory).length > 0) {
@@ -284,7 +279,6 @@ const CheckoutCalculation = () => {
     };
 
     const handleProductSelect = (storeId, productId, similarProductId) => {
-        // Find the store and the product to swap
         const store = suggestedStores.find(s => s.id === storeId);
         if (!store) return;
 
@@ -294,20 +288,16 @@ const CheckoutCalculation = () => {
         const similarProduct = store.similarProducts.find(p => p.id === similarProductId);
         if (!similarProduct) return;
 
-        // Update the selected products object
         setSelectedProducts({
             ...selectedProducts,
             [`${storeId}-${productId}`]: similarProductId
         });
 
-        // Clone the suggested stores array
         const updatedStores = [...suggestedStores];
         const storeIndex = updatedStores.findIndex(s => s.id === storeId);
 
-        // Update the product in the store
         const productIndex = updatedStores[storeIndex].products.findIndex(p => p.id === productId);
         if (productIndex !== -1) {
-            // Keep the original product ID for reference
             const updatedProduct = {
                 ...similarProduct,
                 originalProductId: productId,
@@ -316,7 +306,6 @@ const CheckoutCalculation = () => {
 
             updatedStores[storeIndex].products[productIndex] = updatedProduct;
 
-            // Update in product category too
             const category = product.category || "Khác";
             if (updatedStores[storeIndex].productsByCategory[category]) {
                 const catProductIndex = updatedStores[storeIndex].productsByCategory[category].findIndex(p => p.id === productId);
@@ -325,19 +314,16 @@ const CheckoutCalculation = () => {
                 }
             }
 
-            // Recalculate total price
             updatedStores[storeIndex].totalPrice = updatedStores[storeIndex].products.reduce(
                 (total, p) => total + (p.cost || 0),
                 0
             );
 
-            // Update the stores
             setSuggestedStores(updatedStores);
             toast.success("Đã thay đổi sản phẩm thành công!");
         }
     };
 
-    // Handle opening modal to show similar products
     const openSimilarProductsModal = (product, store) => {
         const similarProducts = store.similarProductsByIndex[product.productIndex] || [];
         if (similarProducts.length === 0) {
@@ -351,7 +337,6 @@ const CheckoutCalculation = () => {
         setModalOpen(true);
     };
 
-    // Handle product swap from modal
     const handleProductSwapFromModal = (originalProduct, newProduct) => {
         if (!currentStore || !originalProduct || !newProduct) return;
 
@@ -401,13 +386,11 @@ const CheckoutCalculation = () => {
         return value.toString();
     };
 
-    // Compact product card with dropdown for similar products
     const renderCompactProduct = (product, store) => {
         const similarProducts = store.similarProductsByIndex[product.productIndex] || [];
         const hasSimilarProducts = similarProducts && similarProducts.length > 0;
         const isSelected = selectedProducts[`${store.id}-${product.id}`];
 
-        // If it's a swapped product, show it differently
         const isAlternative = product.isAlternative === true;
 
         return (
@@ -467,7 +450,6 @@ const CheckoutCalculation = () => {
         );
     };
 
-    // Render loading state
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex justify-center items-center">

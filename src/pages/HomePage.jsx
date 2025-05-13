@@ -34,11 +34,9 @@ const HomePage = () => {
     const [isImageUploading, setIsImageUploading] = useState(false);
 
 
-    // Highlight input
     const searchInputRef = useRef(null);
     const [activeTab, setActiveTab] = useState('text');
 
-    // Fetch ingredients from API
     useEffect(() => {
         const fetchIngredients = async () => {
             try {
@@ -61,7 +59,6 @@ const HomePage = () => {
         fetchIngredients();
     }, []);
 
-    // Fetch dishes from API
     useEffect(() => {
         const fetchDishes = async () => {
             try {
@@ -246,7 +243,7 @@ const HomePage = () => {
                         unit: ingredient.unit,
                         category: ingredient.category || 'Khác'
                     })),
-                    // Thêm phần optionalIngredients
+
                     optionalIngredients: dishResult.optionalIngredients ? dishResult.optionalIngredients.map(ingredient => ({
                         id: ingredient.id,
                         name: ingredient.name,
@@ -287,7 +284,7 @@ const HomePage = () => {
             <Header />
             <Navbar />
 
-            {/* Hero Section with Highlighted Input Methods */}
+            {/* Hero Section */}
             <section className="bg-gradient-to-r from-green-600 to-blue-600 py-12 mb-2">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-8">

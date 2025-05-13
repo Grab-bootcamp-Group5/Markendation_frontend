@@ -6,7 +6,6 @@ const QuantityControl = ({
 }) => {
     const [inputValue, setInputValue] = useState(item.quantity);
 
-    // Cập nhật giá trị input khi item.quantity thay đổi
     useEffect(() => {
         setInputValue(item.quantity);
     }, [item.quantity]);
@@ -16,15 +15,11 @@ const QuantityControl = ({
     };
 
     const handleBlur = () => {
-        // Chuyển thành số nguyên
         const newQuantity = parseInt(inputValue, 10);
 
-        // Kiểm tra giá trị hợp lệ
         if (isNaN(newQuantity) || newQuantity < 1) {
-            // Nếu không hợp lệ, quay lại giá trị cũ
             setInputValue(item.quantity);
         } else {
-            // Cập nhật số lượng
             updateQuantity(item.id, newQuantity, isDishIngredient, dishId);
         }
     };
@@ -39,7 +34,6 @@ const QuantityControl = ({
         <div className="flex items-center">
             <button
                 onClick={() => {
-                    // Giảm số lượng (tối thiểu là 1)
                     const newQuantity = Math.max(1, parseInt(item.quantity, 10) - 1);
                     updateQuantity(item.id, newQuantity, isDishIngredient, dishId);
                 }}
@@ -62,7 +56,6 @@ const QuantityControl = ({
 
             <button
                 onClick={() => {
-                    // Tăng số lượng
                     const newQuantity = parseInt(item.quantity, 10) + 1;
                     updateQuantity(item.id, newQuantity, isDishIngredient, dishId);
                 }}

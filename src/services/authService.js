@@ -11,7 +11,6 @@ export const authService = {
             if (response.data.accessToken) {
                 localStorage.setItem('accessToken', response.data.accessToken);
 
-                // Lưu refreshToken nếu có
                 if (response.data.refreshToken) {
                     localStorage.setItem('refreshToken', response.data.refreshToken);
                 }
@@ -29,7 +28,6 @@ export const authService = {
 
     register: async (userData) => {
         try {
-            // Đảm bảo đúng cấu trúc dữ liệu gửi đi
             const registerData = {
                 fullname: userData.username,
                 email: userData.email,
@@ -41,7 +39,6 @@ export const authService = {
             if (response.data.accessToken) {
                 localStorage.setItem('accessToken', response.data.accessToken);
 
-                // Lưu refreshToken nếu có
                 if (response.data.refreshToken) {
                     localStorage.setItem('refreshToken', response.data.refreshToken);
                 }
@@ -61,7 +58,6 @@ export const authService = {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
-        // Không xóa giỏ hàng để giữ lại các mặt hàng cho người dùng không đăng nhập
     },
 
     refreshToken: async () => {
@@ -73,7 +69,6 @@ export const authService = {
             if (response.data.accessToken) {
                 localStorage.setItem('accessToken', response.data.accessToken);
 
-                // Cập nhật refreshToken mới nếu có
                 if (response.data.refreshToken) {
                     localStorage.setItem('refreshToken', response.data.refreshToken);
                 }

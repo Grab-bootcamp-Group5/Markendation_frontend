@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HiCheck, HiOutlineX } from 'react-icons/hi';
 
-/**
- * Modal component to display and select similar products
- */
 const SimilarProductsModal = ({
     isOpen,
     onClose,
@@ -14,7 +11,6 @@ const SimilarProductsModal = ({
 }) => {
     const [selectedProduct, setSelectedProduct] = useState(null);
 
-    // Reset selection when modal opens or product changes
     useEffect(() => {
         setSelectedProduct(null);
     }, [isOpen, product]);

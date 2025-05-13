@@ -31,19 +31,16 @@ const RegisterForm = () => {
     };
 
     const validateForm = () => {
-        // Password confirmation validation
         if (formData.password !== formData.confirmPassword) {
             setError('Mật khẩu xác nhận không khớp.');
             return false;
         }
 
-        // Password strength validation
         if (formData.password.length < 8) {
             setError('Mật khẩu phải có ít nhất 8 ký tự.');
             return false;
         }
 
-        // Terms agreement validation
         if (!formData.agreeTerms) {
             setError('Bạn cần đồng ý với điều khoản dịch vụ.');
             return false;
@@ -56,7 +53,6 @@ const RegisterForm = () => {
         e.preventDefault();
         setError(null);
 
-        // Validate form before submission
         if (!validateForm()) return;
 
         setIsLoading(true);
@@ -88,7 +84,6 @@ const RegisterForm = () => {
         setShowConfirmPassword(!showConfirmPassword);
     };
 
-    // Testimonial for register page
     const registerTestimonial = {
         quote: "Markendation đã giúp tôi quản lý việc nấu ăn hàng ngày dễ dàng hơn rất nhiều. Tôi tiết kiệm được thời gian và không còn lãng phí thực phẩm nữa!",
         author: "Nguyễn Thành",
@@ -96,9 +91,7 @@ const RegisterForm = () => {
         initials: "NT"
     };
 
-    // Handle Google registration (placeholder for OAuth implementation)
     const handleGoogleRegister = () => {
-        // Implementation for Google OAuth would go here
         console.log('Google registration clicked');
     };
 

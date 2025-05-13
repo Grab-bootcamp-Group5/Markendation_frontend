@@ -1,7 +1,6 @@
 import axiosPrivate from './axiosPrivate';
 
 export const userService = {
-    // Get user information
     getUserInfo: async () => {
         try {
             const response = await axiosPrivate.get('/user');
@@ -11,7 +10,6 @@ export const userService = {
         }
     },
 
-    // Update user location
     updateUserLocation: async (locationData) => {
         try {
             const response = await axiosPrivate.post('/user/location', locationData);
@@ -21,7 +19,6 @@ export const userService = {
         }
     },
 
-    // Save user data to localStorage
     saveUserToLocalStorage: (userData) => {
         if (userData) {
             const userToSave = {
@@ -35,7 +32,6 @@ export const userService = {
         return false;
     },
 
-    // Helper function to get user from localStorage
     getUserFromLocalStorage: () => {
         const userStr = localStorage.getItem('user');
         if (userStr) {
@@ -44,7 +40,6 @@ export const userService = {
         return null;
     },
 
-    // Clear user data from localStorage
     clearUserFromLocalStorage: () => {
         localStorage.removeItem('user');
     }

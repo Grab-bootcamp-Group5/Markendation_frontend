@@ -26,7 +26,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                     setDishWithIngredients(itemData);
                 }
 
-                // Khởi tạo trạng thái cho các nguyên liệu đã chọn (mặc định là chọn tất cả)
                 const initialSelected = {};
                 if (itemData.ingredients) {
                     itemData.ingredients.forEach(ing => {
@@ -35,7 +34,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                 }
                 setSelectedIngredients(initialSelected);
 
-                // Khởi tạo trạng thái cho các nguyên liệu tùy chọn (mặc định là không chọn)
                 const initialOptionalSelected = {};
                 if (itemData.optionalIngredients) {
                     itemData.optionalIngredients.forEach(ing => {
@@ -75,7 +73,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
     const handleAddToCart = async () => {
         try {
             if (type === 'dish' && dishWithIngredients) {
-                // Lọc nguyên liệu đã chọn
                 const selectedMainIngredients = (dishWithIngredients.ingredients || [])
                     .filter(ing => selectedIngredients[ing.id || ing.name])
                     .map(ingredient => ({
@@ -88,7 +85,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                         category: ingredient.category || 'Khác'
                     }));
 
-                // Lọc nguyên liệu tùy chọn đã chọn
                 const selectedOptIngredients = (dishWithIngredients.optionalIngredients || [])
                     .filter(ing => selectedOptionalIngredients[ing.id || ing.name])
                     .map(ingredient => ({
@@ -101,7 +97,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                         category: ingredient.category || 'Khác'
                     }));
 
-                // Kết hợp cả hai danh sách
                 const allSelectedIngredients = [...selectedMainIngredients, ...selectedOptIngredients];
 
                 const dish = {
@@ -145,7 +140,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
 
             window.dispatchEvent(new CustomEvent('basketUpdated'));
 
-            // Close modal
             onClose();
         } catch (error) {
             console.error("Error adding items to basket:", error);
@@ -182,7 +176,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
             unit: ing.unit || 'g'
         }));
 
-        // Xử lý nguyên liệu tùy chọn
         optionalIngredients = (dishWithIngredients.optionalIngredients || []).map(ing => ({
             id: ing.id || ing.name,
             name: ing.vietnameseName || ing.name,
@@ -222,7 +215,6 @@ const ShoppingModal = ({ isOpen, onClose, type, itemData, searchQuery }) => {
                 <div className="flex flex-col md:flex-row">
                     {/* Left content */}
                     <div className="p-6 flex-1">
-                        {/* Title */}
                         <h2 className="text-2xl font-bold mb-6">
                             {title}
                         </h2>

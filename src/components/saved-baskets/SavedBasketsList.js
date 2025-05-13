@@ -30,7 +30,6 @@ const SavedBasketsList = ({ baskets, onRefresh }) => {
             await basketService.removeSavedBasket(index);
             toast.success("Đã xóa giỏ hàng thành công!");
 
-            // Refresh danh sách sau khi xóa
             if (onRefresh) {
                 onRefresh();
             }

@@ -50,8 +50,8 @@ axiosPrivate.interceptors.response.use(
                 localStorage.removeItem('refreshToken');
                 localStorage.removeItem('user');
 
-                // Chuyển hướng đến trang đăng nhập nếu cần
-                // window.location.href = '/login';
+                // Chuyển hướng đến trang đăng nhập
+                window.location.href = '/login';
 
                 return Promise.reject(refreshError);
             }

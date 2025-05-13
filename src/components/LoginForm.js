@@ -38,7 +38,6 @@ const LoginForm = () => {
                 password: formData.password
             });
 
-            // Save remember me preference if checked
             if (formData.rememberMe) {
                 localStorage.setItem('rememberMe', 'true');
             } else {
@@ -61,7 +60,6 @@ const LoginForm = () => {
         setShowPassword(!showPassword);
     };
 
-    // Testimonial for login page
     const loginTestimonial = {
         quote: "Markendation giúp tôi lên kế hoạch bữa ăn và mua sắm thực phẩm hiệu quả. Tôi tiết kiệm được cả thời gian và tiền bạc khi sử dụng ứng dụng này.",
         author: "Trần Huyền",
@@ -69,9 +67,7 @@ const LoginForm = () => {
         initials: "TH"
     };
 
-    // Handle Google login (placeholder for OAuth implementation)
     const handleGoogleLogin = () => {
-        // Implementation for Google OAuth would go here
         console.log('Google login clicked');
     };
 

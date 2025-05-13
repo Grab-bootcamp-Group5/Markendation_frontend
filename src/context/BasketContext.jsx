@@ -14,7 +14,6 @@ export const BasketProvider = ({ children }) => {
     const [syncStatus, setSyncStatus] = useState('synced');
     const [syncQueue, setSyncQueue] = useState([]);
 
-    // Khôi phục giỏ hàng từ localStorage khi khởi tạo
     useEffect(() => {
         const storedBasket = localStorage.getItem('basketItems');
         if (storedBasket) {
@@ -191,7 +190,6 @@ export const BasketProvider = ({ children }) => {
 
             setBasketItems(updatedBasketItems);
 
-            // Thêm vào hàng đợi đồng bộ
             queueSync();
 
             setLoading(false);
@@ -217,7 +215,6 @@ export const BasketProvider = ({ children }) => {
 
             setBasketItems(updatedBasketItems);
 
-            // Thêm vào hàng đợi đồng bộ
             queueSync();
 
             setLoading(false);
@@ -229,28 +226,24 @@ export const BasketProvider = ({ children }) => {
         }
     };
 
-    // Cập nhật giỏ hàng và gọi API nếu cần
     const updateBasket = async (newBasketItems = null) => {
         try {
             setLoading(true);
 
-            // Nếu có newBasketItems được cung cấp, cập nhật state
             if (newBasketItems) {
                 setBasketItems(newBasketItems);
                 localStorage.setItem('basketItems', JSON.stringify(newBasketItems));
 
-                // Thêm vào hàng đợi đồng bộ
                 queueSync();
 
                 setLoading(false);
                 return true;
             }
 
-            // Gọi API với basketItems hiện tại - basketService sẽ xử lý chuyển đổi định dạng
             setSyncStatus('pending');
             const result = await basketService.updateBasket(basketItems);
             setSyncStatus('synced');
-            setSyncQueue([]); // Xóa hàng đợi
+            setSyncQueue([]);
 
             setLoading(false);
             return result;
@@ -262,7 +255,6 @@ export const BasketProvider = ({ children }) => {
         }
     };
 
-    // Xóa toàn bộ giỏ hàng
     const clearBasket = async () => {
         try {
             setLoading(true);
@@ -274,10 +266,8 @@ export const BasketProvider = ({ children }) => {
 
             setBasketItems(emptyBasket);
 
-            // Xóa khỏi localStorage
             localStorage.removeItem('basketItems');
 
-            // Đồng bộ giỏ hàng trống với server
             const result = await basketService.updateBasket(emptyBasket);
             setSyncStatus('synced');
             setSyncQueue([]);
@@ -310,7 +300,7 @@ export const BasketProvider = ({ children }) => {
                 updateBasket,
                 clearBasket,
                 getTotalItemCount,
-                syncStatus // Thêm trạng thái đồng bộ để UI có thể hiển thị
+                syncStatus
             }}
         >
             {children}

@@ -2,7 +2,6 @@ import axiosPublic from './axiosPublic';
 import axiosPrivate from './axiosPrivate';
 
 export const aiService = {
-    // Gợi ý món ăn dựa trên text input
     getDishSuggestionByText: async (textInput) => {
         try {
             const response = await axiosPrivate.post('/ai/text', { description: textInput });

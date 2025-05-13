@@ -48,7 +48,6 @@ const SavedBasketDetailPage = () => {
     const handleLoadToCart = async () => {
         if (basket) {
             try {
-                // Sử dụng context để cập nhật giỏ hàng hiện tại
                 await updateBasket(basket);
                 toast.success("Đã tải giỏ hàng thành công!");
                 navigate("/basket");
@@ -100,7 +99,6 @@ const SavedBasketDetailPage = () => {
         );
     }
 
-    // Định dạng ngày
     const formatDate = (dateString) => {
         if (!dateString) return '';
 
